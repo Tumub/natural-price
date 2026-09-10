@@ -1,0 +1,10 @@
+{
+  "url": "https://www.nike.com/ch/en/t/air-force-1-07-mens-shoes-rWtqPn/CW2288-111",
+  "fetchedAt": "2026-09-10",
+  "expect": {
+    "productKey": "CW2288-111",
+    "productKeyType": "mpn",
+    "price": 135,
+    "currency": "CHF"
+  }
+}

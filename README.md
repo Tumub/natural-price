@@ -9,8 +9,41 @@ the difference. Later, anonymous reports from many users give a second,
 harder-to-block baseline: what other people saw for the same product in the
 same hour.
 
-Status: **planning**. Nothing runs yet. Read [PLAN.md](PLAN.md) for the
-six-month roadmap and the open issues for what to pick up.
+[![ci](https://github.com/Tumub/natural-price/actions/workflows/ci.yml/badge.svg)](https://github.com/Tumub/natural-price/actions/workflows/ci.yml)
+
+Status: **phase 1**. The price reader works against real pages in CI. There
+is no installable extension yet. Read [PLAN.md](PLAN.md) for the roadmap and
+the open issues for what to pick up.
+
+## Try it
+
+```bash
+git clone https://github.com/Tumub/natural-price && cd natural-price
+npm install
+npm test
+npm run demo -- https://www.ikea.com/ch/en/p/billy-bookcase-white-00263850/
+```
+
+The last command fetches one page anonymously and prints what the extractor
+sees. On 2026-09-10 it printed:
+
+```json
+{
+  "productKey": "002.638.50",
+  "productKeyType": "sku",
+  "price": 59.95,
+  "currency": "CHF",
+  "url": "https://www.ikea.com/ch/en/p/billy-bookcase-white-00263850/",
+  "observedAt": "2026-09-10T07:35:53.174Z",
+  "source": "jsonld",
+  "extractor": "jsonld",
+  "name": "BILLY Bookcase - white 80x28x202 cm",
+  "country": "CH"
+}
+```
+
+That is the whole idea in one object: what was shown, where, when, in what
+currency, for which destination. Everything else compares two of these.
 
 ## Why
 

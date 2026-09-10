@@ -1,0 +1,12 @@
+{
+  "url": "https://www.mediamarkt.ch/de/product/_samsung-hw-s801d-soundbar-lautsprecher-weiss-154629028.html",
+  "fetchedAt": "2026-09-10",
+  "expect": {
+    "productKey": "8806095447711",
+    "productKeyType": "gtin",
+    "price": 840.9,
+    "currency": "CHF",
+    "country": "CH",
+    "name": "SAMSUNG HW-S801D/EN, Soundbar, White"
+  }
+}
