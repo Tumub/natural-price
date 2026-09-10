@@ -1,0 +1,19 @@
+{
+  "url": "https://www.booking.com/hotel/ch/hotelspalentorbasel.en-gb.html?checkin=2026-09-28&checkout=2026-10-02&group_adults=2&group_children=0&no_rooms=1&sb_price_type=total",
+  "fetchedAt": "2026-09-10",
+  "expect": {
+    "productKey": "hotelspalentorbasel:6522210_361157441_2_2_0_369127:2026-09-28:2026-10-02",
+    "productKeyType": "sku",
+    "price": 841,
+    "currency": "CHF",
+    "country": "CH",
+    "name": "Hotel Spalentor - Ihr sympathisches Stadthotel, Comfort Double or Twin Room",
+    "extractor": "booking",
+    "source": "dom",
+    "variantCount": 4,
+    "priceRange": {
+      "min": 784,
+      "max": 993
+    }
+  }
+}

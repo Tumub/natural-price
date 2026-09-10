@@ -44,7 +44,7 @@ NP_CROWD_SECRET=$(openssl rand -hex 32) npm run crowd
 ```
 
 ```bash
-NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com NP_CROWD_URL=http://localhost:8788 npm run service
+NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com,booking.com NP_CROWD_URL=http://localhost:8788 npm run service
 ```
 
 Build the extension and load it:

@@ -10,7 +10,7 @@ saw. Rules: [docs/comparison-rules.md](../../docs/comparison-rules.md).
 ```bash
 npm install
 npx playwright install chromium
-NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com npm run service
+NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com,booking.com npm run service
 ```
 
 `POST /check` with `{ observation, installId }` returns a comparison. The
@@ -46,7 +46,7 @@ package for the extractor:
 
 ```bash
 docker build -f packages/fetch-service/Dockerfile -t natural-price-fetch .
-docker run -p 8787:8787 -e NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com natural-price-fetch
+docker run -p 8787:8787 -e NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com,booking.com natural-price-fetch
 ```
 
 A 2 GB VPS runs it comfortably at phase 2 load. Put it behind a reverse proxy

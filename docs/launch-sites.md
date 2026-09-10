@@ -14,6 +14,16 @@ proves nothing.
 | mediamarkt.ch | JSON-LD with GTIN, marketplace sellers, frequent price changes. Cross-retailer key. | GTIN |
 | nike.com (CH) | ProductGroup with per-size variants, member pricing exists, exercises the variant logic. | MPN |
 
+## Added 2026-09-10: booking.com
+
+The first hotel site, and the first with no structured price. A per-site
+reader takes the highlighted or first room row from the room table. The
+server cannot reach Booking (JavaScript challenge), so the comparison runs
+through the private tab on the user's device or the crowd. Booking's own
+personalisation by login, Genius rates, is disclosed on the page; the
+extension will show it as a difference between the logged-in tab and the
+private tab.
+
 ## Deferred, with reasons
 
 The plan called for one flight and one hotel platform. Both are deferred to
