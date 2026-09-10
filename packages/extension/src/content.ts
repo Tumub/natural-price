@@ -6,19 +6,28 @@ import { stripUrl } from './url';
 /**
  * Runs on product pages of the launch sites. Reads the price, asks the
  * background worker to check it, shows the badge. Re-runs when a
- * single-page app changes the URL without a reload.
+ * single-page app changes the URL without a reload, and keeps trying for
+ * a while after each change because app-style sites fill in the product
+ * data after navigation.
  */
 
 let badge: Badge | null = null;
 let lastUrl = '';
+let attempts = 0;
+/** Ticks of 1.5 s to keep looking for a price after a URL change: 30 s. */
+const MAX_ATTEMPTS = 20;
 
 async function run(): Promise<void> {
   const url = new URL(location.href);
   const key = url.origin + url.pathname;
-  if (key === lastUrl) return;
-  lastUrl = key;
-  badge?.remove();
-  badge = null;
+  if (key !== lastUrl) {
+    lastUrl = key;
+    attempts = 0;
+    badge?.remove();
+    badge = null;
+  }
+  if (badge || attempts >= MAX_ATTEMPTS) return;
+  attempts++;
 
   const obs = extract(document, url);
   if (!obs) return;

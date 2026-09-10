@@ -124,6 +124,18 @@ describe.skipIf(skip)('extension end to end', () => {
     await context.pages()[0]?.evaluate(() => undefined).catch(() => undefined);
   }, 90_000);
 
+  it('keeps looking when the product data arrives seconds after the page loaded', async () => {
+    const page = await context.newPage();
+    await page.goto(fixtures.url('mediamarkt', 'samsung-soundbar') + '?np_late=4000');
+    await page.waitForTimeout(500);
+    expect(await page.locator('[data-np-verdict]').count()).toBe(0);
+    const verdict = page.locator('[data-np-verdict]');
+    await expect.poll(() => verdict.count(), { timeout: 20_000 }).toBe(1);
+    await expect.poll(() => verdict.getAttribute('data-np-verdict'), { timeout: 40_000 }).not.toBe('checking');
+    expect(await verdict.textContent()).toMatch(/840\.90/);
+    await page.close();
+  }, 90_000);
+
   it('shows the badge on the Nike variant page too', async () => {
     const page = await context.newPage();
     await page.goto(fixtures.url('nike', 'cw2288-111'));
