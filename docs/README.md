@@ -7,6 +7,7 @@
 | [payload-schema.json](payload-schema.json) | Everything the extension sends, enforced by the servers |
 | [crowd-aggregation.sql](crowd-aggregation.sql) | The exact SQL behind the crowd median |
 | [open-data.md](open-data.md) | What is published, under which licence, on what schedule |
+| [compliance.md](compliance.md) | What data protection and consumer rules apply, what is done, what is open |
 | [blocking-log.md](blocking-log.md) | Which sites answer a clean fetch, and the exit strategy |
 | [verification-log.md](verification-log.md) | Manual checks against real sites, dated |
 | [launch-post.md](launch-post.md) | The public launch draft with the numbers still to fill |

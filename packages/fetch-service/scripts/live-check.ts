@@ -7,8 +7,7 @@
  *   npm run live-check -- [rounds]
  */
 import { CleanFetcher } from '../src/browser';
-import { compare } from '../src/compare';
-import { extract } from '@natural-price/extension';
+import { compare, extract } from '@natural-price/extension';
 import { parseHtml } from '@natural-price/extension/src/dom';
 import { fetchPage } from '@natural-price/extension/src/tools/fetch-page';
 
@@ -37,7 +36,7 @@ for (const url of urls) {
     if (r.comparable) ok++;
     // Same anonymous request on both sides: any "higher"/"lower" here is a false positive.
     if (r.verdict === 'higher' || r.verdict === 'lower') falsePositives++;
-    console.log([new URL(url).hostname, i + 1, Date.now() - t, cleans.map((c) => c.status + (c.reason ? `(${c.reason})` : '')).join(','), r.verdict, r.clean?.price ?? '-', yours.price, r.reasons.filter((x) => !/assumed/.test(x)).join('; ')].join('\t'));
+    console.log([new URL(url).hostname, i + 1, Date.now() - t, cleans.map((c) => c.status + (c.reason ? `(${c.reason})` : '')).join(','), r.verdict, r.clean?.price ?? '-', yours.price, r.reasons.filter((x: string) => !/assumed/.test(x)).join('; ')].join('\t'));
   }
 }
 await f.stop();

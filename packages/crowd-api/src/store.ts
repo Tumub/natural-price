@@ -113,6 +113,14 @@ export class CrowdStore {
     return out;
   }
 
+  /** Delete raw observations older than `days`. Aggregates for those days were already published. */
+  purge(days: number, now = new Date()): number {
+    const cutoff = new Date(now.getTime() - days * 86_400_000).toISOString().slice(0, 10);
+    const before = this.count();
+    this.db.prepare('DELETE FROM observations WHERE substr(hour, 1, 10) < ?').run(cutoff);
+    return before - this.count();
+  }
+
   count(): number {
     return (this.db.prepare('SELECT COUNT(*) AS c FROM observations').get() as { c: number }).c;
   }

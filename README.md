@@ -2,10 +2,10 @@
 
 **See the price a stranger would get, next to the price you were shown.**
 
-Natural Price is an open-source browser extension and backend that detect
-personalised pricing. When you open a product page it reads the price you
-see, fetches the same page from a clean, anonymous session, and shows you
-the difference. Later, anonymous reports from many users give a second,
+Natural Price is an open-source browser extension that detects personalised
+pricing. When you open a product page it reads the price you see, opens the
+same page again in a private tab on your own device, and shows you the
+difference. By default nothing leaves your browser. Later, anonymous reports from many users give a second,
 harder-to-block baseline: what other people saw for the same product in the
 same hour.
 

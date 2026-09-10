@@ -2,22 +2,44 @@
 <meta charset="utf-8">
 <title>Natural Price options</title>
 <style>
-  body { font: 14px/1.5 system-ui, sans-serif; margin: 16px; min-width: 360px; color: #111; }
-  label { display: block; font-weight: 600; margin-bottom: 4px; }
-  input { width: 100%; box-sizing: border-box; padding: 6px 8px; font: inherit; }
-  button { margin-top: 10px; padding: 6px 12px; font: inherit; }
-  p { color: #555; font-size: 12px; }
-  #status { color: #2e7d32; }
+  body { font: 14px/1.55 system-ui, sans-serif; margin: 18px; max-width: 460px; color: #111; }
+  h2 { font-size: 14px; margin: 22px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  fieldset { border: 0; margin: 0; padding: 0; }
+  .opt { display: block; font-weight: 600; margin-top: 10px; }
+  .opt span { display: block; font-weight: normal; color: #555; font-size: 12.5px; margin: 2px 0 0 22px; }
+  input[type=url] { width: 100%; box-sizing: border-box; padding: 6px 8px; font: inherit; }
+  button { margin-top: 14px; padding: 7px 14px; font: inherit; }
+  p { color: #555; font-size: 12.5px; }
+  ul { color: #555; font-size: 12.5px; margin: 4px 0; padding-left: 20px; }
+  #status { color: #2e7d32; margin-left: 8px; }
+  hr { border: 0; border-top: 1px solid #e2e2e2; margin: 20px 0; }
 </style>
-<label>Where the clean session runs</label>
-<p>The clean session is the same page opened with no cookies, no login and no history. The price it gets is what you are compared with.</p>
-<label style="font-weight:normal"><input type="radio" name="cleanMode" value="server"> On the server only. Sees location and device effects too; some shops block it.</label>
-<label style="font-weight:normal"><input type="radio" name="cleanMode" value="private"> In a private tab on this device only. Nothing is fetched by the server; your own address is used, so shops do not block it, but location and device effects stay hidden.</label>
-<label style="font-weight:normal"><input type="radio" name="cleanMode" value="both"> Both. The two corroborate each other for medium confidence.</label>
+
+<h2>Where the clean session runs</h2>
+<p>The clean session is this same page opened with no cookies, no login and no history. The price it gets is what you are compared with.</p>
+<fieldset>
+  <label class="opt"><input type="radio" name="cleanMode" value="local"> On this device only
+    <span>A private tab here, compared here. Nothing is sent to any server, on any website. Recommended.</span></label>
+  <label class="opt"><input type="radio" name="cleanMode" value="both"> On this device and on the server
+    <span>Adds a second opinion from a different address, and the anonymous comparison with other users. Only for the companies listed below.</span></label>
+  <label class="opt"><input type="radio" name="cleanMode" value="server"> On the server only
+    <span>No private tab. Only for the companies listed below.</span></label>
+</fieldset>
 <p id="incognito"></p>
-<label for="serviceUrl">Fetch service URL</label>
-<input id="serviceUrl" type="url" placeholder="http://localhost:8787">
-<p>The server that compares prices and, in server mode, loads pages in a clean session. Run your own from the repository, or use the default.</p>
-<button id="save">Save</button>
-<span id="status"></span>
+
+<h2>Companies the server may be contacted about</h2>
+<p>In the two server modes, the extension contacts the server only for these companies. Every other website is compared on this device or not at all. This list is fixed in the code and can be checked in the repository.</p>
+<ul id="sites"></ul>
+
+<h2>Websites</h2>
+<label class="opt"><input type="checkbox" id="allSites"> Read prices on every website
+  <span>Off means only the companies above, which are the ones with a tested price reader. On means the extension also tries any other shop that publishes a price in a standard format.</span></label>
+
+<hr>
+<h2>Server address</h2>
+<input id="serviceUrl" type="url" placeholder="https://your-server.example">
+<p>Only used in the two server modes. Run your own from the repository if you prefer.</p>
+
+<button id="save">Save</button><span id="status"></span>
 <script src="options.js" type="module"></script>

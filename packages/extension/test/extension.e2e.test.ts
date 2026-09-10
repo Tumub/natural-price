@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import type { Server } from 'node:http';
@@ -10,6 +10,7 @@ import { createApp } from '../../fetch-service/src/server';
 import { createCrowdApp } from '../../crowd-api/src/server';
 import { CrowdStore } from '../../crowd-api/src/store';
 import { startFixtureServer } from '../../../test-support/fixture-server';
+import { createServer, type Server as HttpServer } from 'node:http';
 
 /**
  * Loads the built extension into Chromium, opens a locally served fixture,
@@ -27,6 +28,7 @@ describe.skipIf(skip)('extension end to end', () => {
   let crowdApp: Server;
   let crowdApi: string;
   let context: BrowserContext;
+  let api: string;
 
   beforeAll(async () => {
     fixtures = await startFixtureServer();
@@ -37,8 +39,8 @@ describe.skipIf(skip)('extension end to end', () => {
     crowdApi = `http://127.0.0.1:${(crowdApp.address() as AddressInfo).port}`;
     app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], fetchesPerCheck: 1, crowd: new CrowdClient(crowdApi) });
     await new Promise<void>((r) => app.listen(0, '127.0.0.1', r));
-    const api = `http://127.0.0.1:${(app.address() as AddressInfo).port}`;
-    execFileSync('node', [join(ext, 'build.mjs')], { env: { ...process.env, NP_SERVICE_URL: api, NP_EXTRA_MATCHES: 'http://127.0.0.1/*' }, stdio: 'inherit' });
+    api = `http://127.0.0.1:${(app.address() as AddressInfo).port}`;
+    execFileSync('node', [join(ext, 'build.mjs')], { env: { ...process.env, NP_SERVICE_URL: api, NP_EXTRA_MATCHES: 'http://127.0.0.1/*', NP_EXTRA_SERVER_SITES: '127.0.0.1' }, stdio: 'inherit' });
     const dist = join(ext, 'dist');
     context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
@@ -46,6 +48,13 @@ describe.skipIf(skip)('extension end to end', () => {
       args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
     });
   }, 90_000);
+
+  /** The default mode is device-only. These tests exercise the server path, so they ask for it. */
+  beforeEach(async () => {
+    const [sw] = context.serviceWorkers();
+    const worker = sw ?? (await context.waitForEvent('serviceworker'));
+    await worker.evaluate((url) => chrome.storage.local.set({ cleanMode: 'server', serviceUrl: url, allSites: true }), api);
+  });
 
   afterAll(async () => {
     await context?.close();
@@ -96,6 +105,31 @@ describe.skipIf(skip)('extension end to end', () => {
     await page.close();
   }, 60_000);
 
+  it('in the default mode makes no network call at all', async () => {
+    // A server that would answer, pointed at by the extension, and must never be asked.
+    let hits = 0;
+    const spy: HttpServer = createServer((_req, res) => {
+      hits++;
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{}');
+    });
+    await new Promise<void>((r) => spy.listen(0, '127.0.0.1', r));
+    const spyUrl = `http://127.0.0.1:${(spy.address() as AddressInfo).port}`;
+    const [sw] = context.serviceWorkers();
+    const worker = sw ?? (await context.waitForEvent('serviceworker'));
+    await worker.evaluate((url) => chrome.storage.local.set({ cleanMode: 'local', serviceUrl: url, allSites: true }), spyUrl);
+
+    const page = await context.newPage();
+    await page.goto(fixtures.url('ikea', 'billy-bookcase'));
+    const verdict = page.locator('[data-np-verdict]');
+    await expect.poll(() => verdict.getAttribute('data-np-verdict'), { timeout: 40_000 }).not.toBe('checking');
+    await page.locator('summary').click();
+    const details = (await page.locator('details').textContent()) ?? '';
+    expect(details).toMatch(/nothing was sent to any server/);
+    expect(hits).toBe(0);
+    await page.close();
+    spy.close();
+  }, 90_000);
+
   it('in "both" mode without incognito access, still answers from the server and says why the private tab failed', async () => {
     // Set the mode through the options page, the way a user would.
     const optionsUrl = await (async () => {
@@ -106,6 +140,7 @@ describe.skipIf(skip)('extension end to end', () => {
     const options = await context.newPage();
     await options.goto(optionsUrl);
     await options.check('input[name="cleanMode"][value="both"]');
+    await options.fill('#serviceUrl', api);
     await expect.poll(() => options.locator('#incognito').textContent()).toMatch(/Allow in Incognito|allowed/);
     await options.click('#save');
     await expect.poll(() => options.locator('#status').textContent()).toBe('Saved.');

@@ -146,18 +146,19 @@ export function createBadge(yours: Observation, handlers: BadgeHandlers = {}): B
           : r.clean?.exitLocation === 'private-tab'
             ? 'A private tab on this device was shown'
             : 'A clean session was shown';
+      const local = r.clean?.exitLocation === 'private-tab' && r.cleanFetches.every((c) => c.exitLocation === 'private-tab');
       const ref = r.basis === 'crowd' && r.crowd ? fmt(r.crowd.median, yours.currency) : r.clean ? fmt(r.clean.price, r.clean.currency) : '';
       const tail = r.basis === 'crowd' ? ` ${when}` : '';
-      if (r.verdict === 'same') return render('same', `You were shown ${y}. ${who} the same${tail}.`, { confidence: r.confidence, crowd: crowdLine, reasons: r.reasons });
+      if (r.verdict === 'same') return render('same', `You were shown ${y}. ${who} the same${tail}.`, { confidence: local ? `${r.confidence}, checked on this device` : r.confidence, crowd: crowdLine, reasons: r.reasons });
       if (r.verdict === 'higher')
         return render('higher', `You were shown ${y}. ${who} ${ref}${tail}, ${pct}% less.`, {
-          confidence: r.confidence,
+          confidence: local ? `${r.confidence}, checked on this device` : r.confidence,
           crowd: crowdLine,
           action: 'Compare in a private window before you buy.',
           button: true,
           reasons: r.reasons,
         });
-      return render('lower', `You were shown ${y}. ${who} ${ref}${tail}, ${pct}% more.`, { confidence: r.confidence, crowd: crowdLine, reasons: r.reasons });
+      return render('lower', `You were shown ${y}. ${who} ${ref}${tail}, ${pct}% more.`, { confidence: local ? `${r.confidence}, checked on this device` : r.confidence, crowd: crowdLine, reasons: r.reasons });
     },
     error: (msg) => render('error', `You were shown ${y}. Could not check: ${msg}.`),
     remove: () => host.remove(),
