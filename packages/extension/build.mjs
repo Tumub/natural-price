@@ -5,6 +5,7 @@
  *   NP_SERVICE_URL     origin of the fetch service (default http://localhost:8787)
  *   NP_EXTRA_MATCHES   comma list of extra content-script match patterns (tests)
  *   NP_EXTRA_SERVER_SITES  comma list of extra hosts the server may be contacted about
+ *   NP_SERVER_ENABLED  "true" to compile in the optional server modes (default: off)
  */
 import { build } from 'esbuild';
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -17,6 +18,7 @@ const dist = join(here, target === 'firefox' ? 'dist-firefox' : 'dist');
 const serviceUrl = (process.env.NP_SERVICE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
 const extra = (process.env.NP_EXTRA_MATCHES ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 const extraSites = (process.env.NP_EXTRA_SERVER_SITES ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const serverEnabled = process.env.NP_SERVER_ENABLED === 'true';
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
@@ -27,7 +29,11 @@ await build({
   format: 'esm',
   target: target === 'firefox' ? 'firefox128' : 'chrome120',
   outdir: dist,
-  define: { __SERVICE_URL__: JSON.stringify(serviceUrl), __EXTRA_SERVER_SITES__: JSON.stringify(extraSites) },
+  define: {
+    __SERVICE_URL__: JSON.stringify(serviceUrl),
+    __EXTRA_SERVER_SITES__: JSON.stringify(extraSites),
+    __SERVER_ENABLED__: JSON.stringify(serverEnabled),
+  },
   logLevel: 'warning',
 });
 
@@ -43,4 +49,4 @@ if (target === 'firefox') {
 }
 writeFileSync(join(dist, 'manifest.json'), JSON.stringify(manifest, null, 2));
 copyFileSync(join(here, 'src/options.html'), join(dist, 'options.html'));
-console.log(`built ${dist} (${target}) for service ${serviceUrl}${extra.length ? ' with extra matches ' + extra.join(' ') : ''}`);
+console.log(`built ${dist} (${target}) ${serverEnabled ? `with the server enabled at ${serviceUrl}` : 'with no server capability'}${extra.length ? ' with extra matches ' + extra.join(' ') : ''}`);

@@ -8,7 +8,12 @@ Natural Price
 
 ## Summary (132 characters max)
 
-See the price a stranger would get, next to the price you were shown. Detects personalised pricing.
+Detect surveillance pricing: see the price a stranger gets, next to yours. Nothing leaves your browser.
+
+## Keywords
+
+surveillance pricing, personalised pricing, personalized pricing, price
+discrimination, dynamic pricing, price transparency, privacy
 
 ## Description
 

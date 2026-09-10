@@ -1,20 +1,27 @@
-import { DEFAULTS, getSettings, SERVER_SITES, type CleanMode } from './settings';
+import { DEFAULTS, getSettings, SERVER_ENABLED, SERVER_SITES, type CleanMode } from './settings';
 
-const input = document.getElementById('serviceUrl') as HTMLInputElement;
+const input = document.getElementById('serviceUrl') as HTMLInputElement | null;
 const statusEl = document.getElementById('status') as HTMLSpanElement;
 const incognitoEl = document.getElementById('incognito') as HTMLParagraphElement;
 const allSitesEl = document.getElementById('allSites') as HTMLInputElement;
 const radios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="cleanMode"]'));
 
-for (const site of SERVER_SITES) {
-  const li = document.createElement('li');
-  li.textContent = site;
-  document.getElementById('sites')!.appendChild(li);
+for (const id of ['sites', 'tested']) {
+  for (const site of SERVER_SITES) {
+    const li = document.createElement('li');
+    li.textContent = site;
+    document.getElementById(id)?.appendChild(li);
+  }
+}
+
+if (!SERVER_ENABLED) {
+  document.getElementById('noServer')!.hidden = false;
+  for (const id of ['modes', 'serverOnly']) document.getElementById(id)?.remove();
 }
 
 async function load(): Promise<void> {
   const s = await getSettings();
-  input.value = s.serviceUrl;
+  if (input) input.value = s.serviceUrl;
   allSitesEl.checked = s.allSites;
   for (const r of radios) r.checked = r.value === s.cleanMode;
   const isFirefox = typeof (globalThis as { browser?: { contextualIdentities?: unknown } }).browser?.contextualIdentities !== 'undefined';
@@ -29,11 +36,11 @@ async function load(): Promise<void> {
 }
 
 document.getElementById('save')!.addEventListener('click', async () => {
-  const cleanMode = (radios.find((r) => r.checked)?.value ?? DEFAULTS.cleanMode) as CleanMode;
+  const cleanMode = (SERVER_ENABLED ? (radios.find((r) => r.checked)?.value ?? DEFAULTS.cleanMode) : 'local') as CleanMode;
   let origin = DEFAULTS.serviceUrl;
   if (cleanMode !== 'local') {
     try {
-      origin = new URL(input.value || DEFAULTS.serviceUrl).origin;
+      origin = new URL(input?.value || DEFAULTS.serviceUrl).origin;
     } catch {
       statusEl.textContent = 'Not a valid server address.';
       return;
