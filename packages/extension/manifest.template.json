@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Natural Price",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shows the price a stranger would get next to the price you were shown.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "clipboardWrite"],
   "host_permissions": ["__SERVICE_ORIGIN__/*"],
   "optional_host_permissions": ["https://*/*", "http://*/*"],
   "background": { "service_worker": "background.js", "type": "module" },

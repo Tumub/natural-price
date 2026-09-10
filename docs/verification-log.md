@@ -5,6 +5,12 @@ Manual checks against the real launch sites, newest first. Run with
 anonymous requests here, so any verdict other than `same` is a false
 positive of the pipeline, not a finding about the site.
 
+## 2026-09-10, blocking sweep with full Chromium
+
+14 sites, one clean fetch each, direct Swiss connection. 6 returned a price;
+Conrad and LEGO answer Chromium although they refuse plain requests. Full
+table and the exit strategy in [blocking-log.md](blocking-log.md).
+
 ## 2026-09-10, phase 2 exit check
 
 Direct connection from Switzerland, no proxy, headless Chromium, 5 rounds

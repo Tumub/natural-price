@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "@natural-price/extension": "*",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "jsdom": "^25.0.1",
     "playwright": "^1.63.0"
   }

@@ -20,6 +20,9 @@ const CSS = `
 .m { margin: 0; }
 .c { color: #666; font-size: 12px; margin-top: 6px; }
 .a { margin-top: 8px; font-size: 12px; }
+.b { all: unset; display: inline-block; margin-top: 8px; padding: 6px 10px; border-radius: 6px; background: #111; color: #fff; font-size: 12px; cursor: pointer; }
+.b:hover { background: #333; }
+.s { margin-top: 6px; font-size: 12px; color: #444; }
 details { margin-top: 6px; font-size: 12px; color: #666; }
 summary { cursor: pointer; }
 ul { margin: 4px 0 0; padding-left: 16px; }
@@ -40,7 +43,12 @@ export interface Badge {
   remove(): void;
 }
 
-export function createBadge(yours: Observation): Badge {
+export interface BadgeHandlers {
+  /** Called when the user asks to open the page privately. Returns a status line to show. */
+  openPrivate?: () => Promise<string>;
+}
+
+export function createBadge(yours: Observation, handlers: BadgeHandlers = {}): Badge {
   const host = document.createElement('div');
   host.setAttribute('data-natural-price', '');
   const root = host.attachShadow({ mode: 'open' });
@@ -51,7 +59,7 @@ export function createBadge(yours: Observation): Badge {
   root.append(style, box);
   document.documentElement.append(host);
 
-  function render(verdict: string, main: string, extra: { confidence?: string; action?: string; reasons?: string[] } = {}) {
+  function render(verdict: string, main: string, extra: { confidence?: string; action?: string; button?: boolean; reasons?: string[] } = {}) {
     box.dataset.verdict = verdict;
     box.innerHTML = '';
     const h = document.createElement('div');
@@ -82,6 +90,21 @@ export function createBadge(yours: Observation): Badge {
       a.textContent = extra.action;
       box.append(a);
     }
+    if (extra.button && handlers.openPrivate) {
+      const b = document.createElement('button');
+      b.className = 'b';
+      b.setAttribute('data-np-action', 'open-private');
+      b.textContent = 'Open in a private window';
+      const s = document.createElement('div');
+      s.className = 's';
+      s.setAttribute('data-np-status', '');
+      b.addEventListener('click', async () => {
+        b.disabled = true;
+        s.textContent = await handlers.openPrivate!();
+        b.disabled = false;
+      });
+      box.append(b, s);
+    }
     if (extra.reasons && extra.reasons.length) {
       const d = document.createElement('details');
       const s = document.createElement('summary');
@@ -111,7 +134,8 @@ export function createBadge(yours: Observation): Badge {
       if (r.verdict === 'higher')
         return render('higher', `You were shown ${y}. A clean session was shown ${c}, ${pct}% less.`, {
           confidence: r.confidence,
-          action: 'Try opening this page in a private window and compare before you buy.',
+          action: 'Compare in a private window before you buy.',
+          button: true,
           reasons: r.reasons,
         });
       return render('lower', `You were shown ${y}. A clean session was shown ${c}, ${pct}% more.`, { confidence: r.confidence, reasons: r.reasons });

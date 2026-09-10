@@ -3,14 +3,18 @@ import { createHash } from 'node:crypto';
 import type { Observation } from '@natural-price/extension';
 import { stripUrl } from '@natural-price/extension';
 import { CleanFetcher } from './browser';
-import { compare, type Comparison } from './compare';
+import { Breaker } from './breaker';
+import { compare, type CleanResult, type Comparison } from './compare';
 import { RateLimiter } from './ratelimit';
+import { Stats } from './stats';
+import { validateCheckBody } from './validate';
 
 /**
  * Two routes.
  *   POST /check  { observation, installId }  -> Comparison   (what the extension calls)
  *   POST /fetch  { url }                      -> CleanResult[] (debugging)
- *   GET  /health
+ *   GET  /health                              -> exits, paused hosts
+ *   GET  /stats                               -> per-host per-day counters
  * Logs carry no IP, no install id, no URL query. See PRIVACY.md.
  */
 
@@ -21,6 +25,8 @@ export interface ServerOptions {
   allowedHosts?: string[];
   /** How many exits to use per check. */
   fetchesPerCheck?: number;
+  breaker?: Breaker;
+  stats?: Stats;
 }
 
 const MAX_BODY = 16 * 1024;
@@ -46,16 +52,6 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
-function isObservation(x: unknown): x is Observation {
-  const o = x as Observation;
-  return (
-    !!o && typeof o === 'object' &&
-    typeof o.productKey === 'string' && typeof o.price === 'number' && o.price > 0 &&
-    typeof o.currency === 'string' && /^[A-Z]{3}$/.test(o.currency) &&
-    typeof o.url === 'string' && typeof o.observedAt === 'string'
-  );
-}
-
 function hostAllowed(url: string, allowed: string[] | undefined): boolean {
   if (!allowed || allowed.length === 0) return true;
   const h = new URL(url).hostname;
@@ -65,11 +61,24 @@ function hostAllowed(url: string, allowed: string[] | undefined): boolean {
 export function createApp(opts: ServerOptions) {
   const limiter = opts.limiter ?? new RateLimiter();
   const perCheck = opts.fetchesPerCheck ?? 2;
+  const breaker = opts.breaker ?? new Breaker();
+  const stats = opts.stats ?? new Stats();
+
+  /** Fetch through the breaker: a paused host is not touched. */
+  async function guardedFetch(url: string): Promise<CleanResult[]> {
+    const host = new URL(url).hostname;
+    if (breaker.isOpen(host)) return [{ observation: null, status: 'blocked', exitLocation: 'none', reason: 'circuit open: recent fetches to this site were blocked' }];
+    const cleans = await opts.fetcher.fetchMany(url, perCheck);
+    if (cleans.some((c) => c.status === 'ok')) breaker.recordOk(host);
+    else if (cleans.some((c) => c.status === 'blocked')) breaker.recordBlocked(host);
+    return cleans;
+  }
 
   return createServer(async (req, res) => {
     const path = (req.url ?? '/').split('?')[0];
     if (req.method === 'OPTIONS') return json(res, 204, {});
-    if (req.method === 'GET' && path === '/health') return json(res, 200, { ok: true, exits: opts.fetcher.exitLabels });
+    if (req.method === 'GET' && path === '/health') return json(res, 200, { ok: true, exits: opts.fetcher.exitLabels, paused: breaker.snapshot() });
+    if (req.method === 'GET' && path === '/stats') return json(res, 200, { successRate: stats.successRate(), days: stats.snapshot() });
     if (req.method !== 'POST') return json(res, 404, { error: 'not found' });
 
     let body: any;
@@ -84,19 +93,20 @@ export function createApp(opts: ServerOptions) {
       const url = stripUrl(body.url);
       if (!hostAllowed(url, opts.allowedHosts)) return json(res, 403, { error: 'host not allowed' });
       if (!limiter.allow('fetch:' + hash(String(body.installId ?? 'anon')))) return json(res, 429, { error: 'rate limited' });
-      return json(res, 200, await opts.fetcher.fetchMany(url, perCheck));
+      return json(res, 200, await guardedFetch(url));
     }
 
     if (path === '/check') {
-      if (!isObservation(body.observation)) return json(res, 400, { error: 'observation malformed' });
-      if (typeof body.installId !== 'string' || body.installId.length < 8) return json(res, 400, { error: 'installId required' });
-      const yours = body.observation;
+      const v = validateCheckBody(body);
+      if (!v.ok) return json(res, 400, { error: 'payload does not match docs/payload-schema.json', details: v.errors });
+      const yours = body.observation as Observation;
       const url = stripUrl(yours.url);
       if (!hostAllowed(url, opts.allowedHosts)) return json(res, 403, { error: 'host not allowed' });
       if (!limiter.allow('check:' + hash(body.installId))) return json(res, 429, { error: 'rate limited' });
       const started = Date.now();
-      const cleans = await opts.fetcher.fetchMany(url, perCheck);
+      const cleans = await guardedFetch(url);
       const result: Comparison = compare({ ...yours, url }, cleans);
+      stats.record(new URL(url).hostname, cleans, result.verdict);
       console.log(JSON.stringify({ t: new Date().toISOString(), host: new URL(url).hostname, ms: Date.now() - started, statuses: cleans.map((c) => c.status), verdict: result.verdict }));
       return json(res, 200, result);
     }
