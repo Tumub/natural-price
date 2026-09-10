@@ -15,13 +15,13 @@ same hour.
 
 [![ci](https://github.com/Tumub/natural-price/actions/workflows/ci.yml/badge.svg)](https://github.com/Tumub/natural-price/actions/workflows/ci.yml)
 
-Status: **deployed, private beta open**. Production fetch service and
-crowd API run at `np.orcavera.com`; release zips for Chrome and Firefox are
-on the [releases page](https://github.com/Tumub/natural-price/releases). Extension,
-clean-room fetch service, comparison rules and the crowd baseline work end
-to end on three launch sites (IKEA, MediaMarkt, Nike, Swiss storefronts),
-Not yet in any store. Read [PLAN.md](PLAN.md) for the roadmap and the
-open issues for what to pick up.
+Status: **private beta open, no hosted service**. Released builds have the
+server compiled out: the whole comparison runs on your machine and nothing
+is transmitted. Zips for Chrome and Firefox are on the
+[releases page](https://github.com/Tumub/natural-price/releases); not yet
+in any store. The server code and its deployment scripts are in the
+repository for anyone who wants to run their own. Read [PLAN.md](PLAN.md)
+for the roadmap and the open issues for what to pick up.
 
 <p>
   <img src="docs/assets/badge-same.png" width="340" alt="Badge: you were shown CHF 59.95, a clean session was shown the same">
