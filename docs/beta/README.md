@@ -13,18 +13,20 @@ folder.
 
 ## What the beta measures
 
-All of it comes from `GET /stats` on the fetch service and from feedback
-issues. Nothing is measured per person.
+The published build has no server, so there are no server-side statistics.
+Everything comes from what testers report. Nothing is measured per person,
+because nothing can be.
 
 | Question | Source | Target |
 |---|---|---|
-| How often is the clean fetch blocked, per site | `/stats` fetch statuses | success over 70 percent |
-| How often is a difference found, per site | `/stats` verdicts | reported, no target |
-| Do people act on it | feedback form question 4 | reported, no target |
-| Are testers still using it | weekly active testers from feedback and `/stats` check counts | 30 of 50 |
-| Did anything leak | payload schema enforced at the service; review against PRIVACY.md at the end | zero findings |
+| How often is a difference found, and on which shops | feedback issues, questions 1 to 3 | reported, no target |
+| Do people act on it | feedback question 4 | reported, no target |
+| Which shops the reader fails on | feedback question 5, then a fixture and a test | every report fixed or explained |
+| Are testers still using it | weekly replies | 30 of 50 |
 
 ## Exit
 
-Thirty weekly active testers, fetch success over 70 percent on the three
-sites, zero open privacy findings. Then phase 4.
+Thirty weekly active testers, every reported reader failure fixed or
+explained, and enough shops covered to make the launch post concrete. The
+crowd baseline and its server come after that, when a median would have
+enough people behind it to mean something.

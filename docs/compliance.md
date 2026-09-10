@@ -13,7 +13,21 @@ exemption (GDPR Article 2(2)(c)) covers the user's side. That removes most
 of the regulation from most of the product. Everything below is about the
 optional hosted servers.
 
-## What applies to the hosted servers
+## Current position: no server is offered
+
+Decided 2026-09-10. The published build has the server compiled out
+(`NP_SERVER_ENABLED` off), so no hosted service is offered to anyone and
+none of the obligations below are engaged. The crowd baseline is worth
+little at beta scale anyway, because a median needs many people looking at
+the same product in the same hour, so switching the server off costs almost
+nothing now and removes all of the administrative work.
+
+The five items at the end of this file are therefore **deferred, not
+done**. They must all be completed before a build with the server enabled
+is given to anyone else. The trigger to reopen them is the beta reaching a
+size where the crowd baseline becomes meaningful.
+
+## What would apply if a server were offered
 
 | Rule | Position |
 |---|---|
@@ -52,7 +66,7 @@ optional hosted servers.
   the same currency, destination, product and a fifteen-minute window, and
   the wording never says "discrimination".
 
-## Open items, in order
+## Deferred items, to complete before any server is offered
 
 1. Fill in the controller's name, address and contact in PRIVACY.md.
 2. Decide the reverse proxy access log: off, or disclosed with a short

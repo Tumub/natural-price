@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 let store: Record<string, unknown> = {};
 vi.stubGlobal('__SERVICE_URL__', 'https://example.test');
 vi.stubGlobal('__EXTRA_SERVER_SITES__', []);
+vi.stubGlobal('__SERVER_ENABLED__', true);
 vi.stubGlobal('chrome', {
   storage: {
     local: {
@@ -33,6 +34,18 @@ describe('settings', () => {
     expect((await getSettings()).cleanMode).toBe('local');
     store = { cleanMode: 'nonsense' };
     expect((await getSettings()).cleanMode).toBe('local');
+  });
+
+  it('ignores a stored server mode when the build has no server', async () => {
+    vi.stubGlobal('__SERVER_ENABLED__', false);
+    vi.resetModules();
+    const mod = await import('../src/settings');
+    store = { cleanMode: 'both' };
+    expect(mod.SERVER_ENABLED).toBe(false);
+    expect((await mod.getSettings()).cleanMode).toBe('local');
+    expect(mod.serverAllowed('https://www.ikea.com/ch/en/p/x/')).toBe(false);
+    vi.stubGlobal('__SERVER_ENABLED__', true);
+    vi.resetModules();
   });
 
   it('allows the server only for the listed companies', () => {

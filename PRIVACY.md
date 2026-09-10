@@ -5,7 +5,12 @@ that is a bug and should be reported as one.
 
 ## The short version
 
-In the default setting, **nothing leaves your browser**. The extension
+**The published build has no server at all.** The two server settings are
+compiled out, so they do not appear in the options and no request can be
+made whatever is in storage. Everything below about servers applies only to
+a build someone makes with them switched on, or to a self-hoster.
+
+Nothing leaves your browser. The extension
 opens the page a second time in a private tab on your own device, reads the
 price, compares the two here, and shows you the answer. No server is
 involved, on any website.
@@ -15,11 +20,16 @@ companies listed in the extension's options and in
 [`SERVER_SITES`](packages/extension/src/settings.ts). Every other website
 stays on your device whatever the setting.
 
+[docs/anonymity.md](docs/anonymity.md) explains the mechanisms and where to
+check them in the code.
+
 ## What each setting does
+
+Only the first row exists in the published build.
 
 | Setting | Leaves your browser | Websites |
 |---|---|---|
-| On this device only (default) | nothing | all |
+| On this device only (default, and the only one published) | nothing | all |
 | On this device and on the server | the fields below, for the listed companies only | all; only listed companies reach the server |
 | On the server only | the fields below, for the listed companies only | listed companies only |
 

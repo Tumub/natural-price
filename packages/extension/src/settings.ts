@@ -11,10 +11,19 @@
 export type CleanMode = 'local' | 'both' | 'server';
 
 /**
+ * Whether this build can talk to a server at all. False in the published
+ * builds, where the two server modes do not exist, the options page does not
+ * offer them, and no request can be made whatever is in storage. Self-hosters
+ * turn it on with NP_SERVER_ENABLED=true at build time.
+ */
+export const SERVER_ENABLED: boolean = typeof __SERVER_ENABLED__ === 'undefined' ? false : __SERVER_ENABLED__;
+
+/**
  * The only companies the extension will ever contact a server about. Sites
  * outside this list are compared on the device or not at all, whatever the
  * mode. Changing this list is a code change, reviewable in the repository.
  */
+/** Sites with a tested price reader. Also the only sites a server-enabled build may contact a server about. */
 const BUILT_IN = ['ikea.com', 'mediamarkt.ch', 'nike.com', 'booking.com'];
 
 /**
@@ -25,6 +34,7 @@ const BUILT_IN = ['ikea.com', 'mediamarkt.ch', 'nike.com', 'booking.com'];
 export const SERVER_SITES: string[] = [...BUILT_IN, ...(typeof __EXTRA_SERVER_SITES__ === 'undefined' ? [] : __EXTRA_SERVER_SITES__)];
 
 export function serverAllowed(url: URL | string): boolean {
+  if (!SERVER_ENABLED) return false;
   const host = new URL(url.toString()).hostname;
   return SERVER_SITES.some((s) => host === s || host.endsWith('.' + s));
 }
@@ -44,9 +54,11 @@ export async function getSettings(): Promise<Settings> {
   const v = (await chrome.storage.local.get(DEFAULTS)) as Omit<Partial<Settings>, 'cleanMode'> & { cleanMode?: string };
   // 'private' was this mode's name in 0.5.0.
   const raw = v.cleanMode === 'private' ? 'local' : v.cleanMode;
+  const stored = MODES.includes(raw as CleanMode) ? (raw as CleanMode) : DEFAULTS.cleanMode;
   return {
     serviceUrl: typeof v.serviceUrl === 'string' ? v.serviceUrl : DEFAULTS.serviceUrl,
-    cleanMode: MODES.includes(raw as CleanMode) ? (raw as CleanMode) : DEFAULTS.cleanMode,
+    // A build without server support stays on the device whatever is stored.
+    cleanMode: SERVER_ENABLED ? stored : 'local',
     allSites: v.allSites !== false,
   };
 }
