@@ -63,6 +63,18 @@ The token is read from the environment only. Never put it in this
 repository. `deploy/coolify.sh --dry-run` prints every request it would
 make without sending any.
 
+Optional: `NP_SERVER_UUID` picks the Coolify server, `NP_FETCH_MEMORY`,
+`NP_CROWD_MEMORY` and `NP_CONCURRENCY` size the containers. On a shared
+host use `NP_FETCH_MEMORY=1024M NP_CROWD_MEMORY=128M NP_CONCURRENCY=1`.
+
+Coolify 4.0.0 notes, learned the hard way: Dockerfile paths must start
+with `/`; project descriptions may not contain a colon; the fields
+`custom_internal_name`, `is_consistent_container_name_enabled` and
+`docker_images_to_keep` are rejected at creation and applied as a
+best-effort update; the storages listing is `{persistent_storages,
+file_storages}`. When the internal name is refused, the fetch service
+addresses the crowd API by its application UUID on Coolify's network.
+
 ## Elsewhere
 
 Any host that runs Docker works the same way. On Fly.io or Railway, deploy

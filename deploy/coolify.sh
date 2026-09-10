@@ -10,7 +10,11 @@
 #   NP_BRANCH          branch (default: main)
 #   NP_ALLOWED_HOSTS   default: ikea.com,mediamarkt.ch,nike.com
 #   NP_EXITS           default: direct  (name it after the server's country, e.g. de)
-#   NP_CROWD_SECRET    default: generated once and printed, keep it
+#   NP_CROWD_SECRET    default: generated once and kept in Coolify
+#   NP_SERVER_UUID     Coolify server to deploy on (default: the first server the token can see)
+#   NP_FETCH_MEMORY    memory cap for the fetch service (default 1536M)
+#   NP_CROWD_MEMORY    memory cap for the crowd API (default 256M)
+#   NP_CONCURRENCY     parallel browser contexts in the fetch service (default 2)
 #
 #   deploy/coolify.sh            create what is missing, update variables, deploy both
 #   deploy/coolify.sh --dry-run  print every request without sending
@@ -25,6 +29,9 @@ NP_REPO=${NP_REPO:-https://github.com/Tumub/natural-price}
 NP_BRANCH=${NP_BRANCH:-main}
 NP_ALLOWED_HOSTS=${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com}
 NP_EXITS=${NP_EXITS:-direct}
+NP_FETCH_MEMORY=${NP_FETCH_MEMORY:-1536M}
+NP_CROWD_MEMORY=${NP_CROWD_MEMORY:-256M}
+NP_CONCURRENCY=${NP_CONCURRENCY:-2}
 DRY=${1:-}
 
 for c in curl jq; do command -v "$c" >/dev/null || { echo "need $c"; exit 1; }; done
@@ -36,24 +43,35 @@ api() { # method path [json]
     echo '{"uuid":"dry-run-uuid"}'
     return
   fi
-  curl -sS -f -X "$m" "$COOLIFY_API_URL$p" \
+  local out code
+  out=$(curl -sS -X "$m" "$COOLIFY_API_URL$p" -w '\n%{http_code}' \
     -H "Authorization: Bearer $COOLIFY_API_TOKEN" -H 'Content-Type: application/json' -H 'Accept: application/json' \
-    ${body:+--data "$body"}
+    ${body:+--data "$body"})
+  code=${out##*$'\n'}; out=${out%$'\n'*}
+  if [ "${code:0:1}" != 2 ]; then echo "$m $p -> HTTP $code: $out" >&2; return 1; fi
+  echo "$out"
 }
 
 echo "server"
-server_uuid=$(api GET /servers | jq -r '.[0].uuid')
-server_ip=$(api GET /servers | jq -r '.[0].ip')
+servers=$(api GET /servers)
+if [ -n "${NP_SERVER_UUID:-}" ]; then
+  server_uuid=$(echo "$servers" | jq -r --arg u "$NP_SERVER_UUID" '.[] | select(.uuid==$u) | .uuid')
+else
+  server_uuid=$(echo "$servers" | jq -r '.[0].uuid')
+fi
+server_ip=$(echo "$servers" | jq -r --arg u "$server_uuid" '.[] | select(.uuid==$u) | .ip')
 [ -n "$server_uuid" ] && [ "$server_uuid" != null ] || { echo "no server visible to this token"; exit 1; }
 echo "  $server_uuid ($server_ip)"
 
 echo "project $NP_PROJECT / $NP_ENVIRONMENT"
 project_uuid=$(api GET /projects | jq -r --arg n "$NP_PROJECT" '.[] | select(.name==$n) | .uuid')
 if [ -z "$project_uuid" ]; then
-  project_uuid=$(api POST /projects "$(jq -nc --arg n "$NP_PROJECT" '{name:$n, description:"Natural Price: fetch service and crowd API"}')" | jq -r .uuid)
+  project_uuid=$(api POST /projects "$(jq -nc --arg n "$NP_PROJECT" '{name:$n, description:"Natural Price fetch service and crowd API"}')" | jq -r .uuid)
   echo "  created project $project_uuid"
 fi
 env_uuid=$(api GET "/projects/$project_uuid/environments" 2>/dev/null | jq -r --arg n "$NP_ENVIRONMENT" '.[]? | select(.name==$n) | .uuid' || true)
+# Older Coolify: the environment is only addressable by name under the project.
+[ -n "$env_uuid" ] || env_uuid=$(api GET "/projects/$project_uuid/$NP_ENVIRONMENT" 2>/dev/null | jq -r '.uuid // empty' || true)
 if [ -z "$env_uuid" ]; then
   env_uuid=$(api POST "/projects/$project_uuid/environments" "$(jq -nc --arg n "$NP_ENVIRONMENT" '{name:$n}')" | jq -r .uuid)
   echo "  created environment $env_uuid"
@@ -70,19 +88,31 @@ ensure_app() { # name dockerfile_location port domain internal_name memory
     --arg domain "$domain" --arg internal "$internal" --arg memory "$memory" '
     {project_uuid:$project, server_uuid:$server, environment_name:$envn, environment_uuid:$envu,
      git_repository:$repo, git_branch:$branch, build_pack:"dockerfile", dockerfile_location:$df, base_directory:"/",
-     ports_exposes:$port, name:$name, instant_deploy:false,
-     connect_to_docker_network:true, is_consistent_container_name_enabled:true, custom_internal_name:$internal,
-     limits_memory:$memory, health_check_enabled:true, health_check_path:"/health", health_check_port:$port,
-     is_git_shallow_clone_enabled:true, docker_images_to_keep:2}
+     ports_exposes:$port, name:$name, instant_deploy:false, connect_to_docker_network:true,
+     limits_memory:$memory, health_check_enabled:true, health_check_path:"/health", health_check_port:$port}
     + (if $domain != "" then {domains:("https://"+$domain)} else {autogenerate_domain:false} end)')
   if [ -z "$uuid" ]; then
     uuid=$(api POST /applications/public "$body" | jq -r .uuid)
+    [ -n "$uuid" ] && [ "$uuid" != null ] || { echo "  creating $name failed" >&2; exit 1; }
     echo "  created $name $uuid" >&2
   else
-    api PATCH "/applications/$uuid" "$(echo "$body" | jq -c 'del(.project_uuid,.server_uuid,.environment_name,.environment_uuid,.instant_deploy)')" >/dev/null
+    api PATCH "/applications/$uuid" "$(echo "$body" | jq -c 'del(.project_uuid,.server_uuid,.environment_name,.environment_uuid,.instant_deploy,.autogenerate_domain)')" >/dev/null
     echo "  updated $name $uuid" >&2
   fi
+  # Newer Coolify accepts a stable internal name and image retention; older builds reject them. Best effort.
+  api PATCH "/applications/$uuid" "$(jq -nc --arg i "$internal" '{is_consistent_container_name_enabled:true, custom_internal_name:$i, docker_images_to_keep:2}')" >/dev/null 2>&1 \
+    || api PATCH "/applications/$uuid" "$(jq -nc --arg i "$internal" '{custom_network_aliases:$i}')" >/dev/null 2>&1 || true
   echo "$uuid"
+}
+
+# The hostname other containers can use for an app: its custom internal name or alias when the server kept it, else its uuid.
+internal_host() { # uuid fallback_name
+  local app; app=$(api GET "/applications/$1")
+  local n; n=$(echo "$app" | jq -r '.custom_internal_name // empty')
+  [ -n "$n" ] && { echo "$n"; return; }
+  n=$(echo "$app" | jq -r '.custom_network_aliases // empty' | tr ',' '\n' | head -1)
+  [ -n "$n" ] && { echo "$n"; return; }
+  echo "$1"
 }
 
 set_envs() { # uuid KEY=VALUE...
@@ -99,7 +129,8 @@ set_envs() { # uuid KEY=VALUE...
 
 ensure_volume() { # uuid name mount
   local uuid=$1 name=$2 mount=$3
-  local have; have=$(api GET "/applications/$uuid/storages" | jq -r --arg m "$mount" '.[]? | select(.mount_path==$m) | .uuid')
+  # Response shape differs between Coolify versions (flat list or nested); look for any object with this mount path.
+  local have; have=$(api GET "/applications/$uuid/storages" | jq -r --arg m "$mount" '[.. | objects | select(.mount_path? == $m)] | first | .uuid // "found"')
   if [ -z "$have" ]; then
     api POST "/applications/$uuid/storages" "$(jq -nc --arg n "$name" --arg m "$mount" '{type:"persistent", name:$n, mount_path:$m}')" >/dev/null
     echo "  volume $name -> $mount"
@@ -107,7 +138,7 @@ ensure_volume() { # uuid name mount
 }
 
 echo "crowd api"
-crowd_uuid=$(ensure_app natural-price-crowd packages/crowd-api/Dockerfile 8788 "" natural-price-crowd 256M | tail -1)
+crowd_uuid=$(ensure_app natural-price-crowd /packages/crowd-api/Dockerfile 8788 "" natural-price-crowd "$NP_CROWD_MEMORY" | tail -1)
 if [ -z "${NP_CROWD_SECRET:-}" ]; then
   NP_CROWD_SECRET=$(api GET "/applications/$crowd_uuid/envs" | jq -r '.[]? | select(.key=="NP_CROWD_SECRET") | .value' | head -1)
   if [ -z "$NP_CROWD_SECRET" ] || [ "$NP_CROWD_SECRET" = null ]; then
@@ -119,10 +150,10 @@ ensure_volume "$crowd_uuid" natural-price-crowd-data /data
 set_envs "$crowd_uuid" PORT=8788 NP_CROWD_DB=/data/crowd.sqlite "NP_CROWD_SECRET=$NP_CROWD_SECRET" "NP_ALLOWED_HOSTS=$NP_ALLOWED_HOSTS"
 
 echo "fetch service"
-fetch_uuid=$(ensure_app natural-price-fetch packages/fetch-service/Dockerfile 8787 "$NP_DOMAIN" natural-price-fetch 1536M | tail -1)
+fetch_uuid=$(ensure_app natural-price-fetch /packages/fetch-service/Dockerfile 8787 "$NP_DOMAIN" natural-price-fetch "$NP_FETCH_MEMORY" | tail -1)
 ensure_volume "$fetch_uuid" natural-price-fetch-data /data
-set_envs "$fetch_uuid" PORT=8787 "NP_ALLOWED_HOSTS=$NP_ALLOWED_HOSTS" "NP_EXITS=$NP_EXITS" NP_FETCHES_PER_CHECK=1 NP_CONCURRENCY=2 \
-  NP_CROWD_URL=http://natural-price-crowd:8788 NP_STATS_FILE=/data/stats.json
+set_envs "$fetch_uuid" PORT=8787 "NP_ALLOWED_HOSTS=$NP_ALLOWED_HOSTS" "NP_EXITS=$NP_EXITS" NP_FETCHES_PER_CHECK=1 "NP_CONCURRENCY=$NP_CONCURRENCY" \
+  "NP_CROWD_URL=http://$(internal_host "$crowd_uuid" natural-price-crowd):8788" NP_STATS_FILE=/data/stats.json
 
 echo "deploy"
 api POST "/deploy?uuid=$crowd_uuid,$fetch_uuid" | jq -c '.deployments? // .'
