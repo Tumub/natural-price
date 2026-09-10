@@ -7,3 +7,4 @@ dist/
 playwright-report/
 test-results/
 packages/extension/dist/
+natural-price-extension-*.zip

@@ -1,6 +1,7 @@
 import { extract } from './extractors/index';
 import { createBadge, type Badge } from './badge';
-import type { CheckRequest, CheckResponse } from './messages';
+import type { CheckRequest, CheckResponse, OpenPrivateRequest, OpenPrivateResponse } from './messages';
+import { stripUrl } from './url';
 
 /**
  * Runs on product pages of the launch sites. Reads the price, asks the
@@ -21,7 +22,19 @@ async function run(): Promise<void> {
 
   const obs = extract(document, url);
   if (!obs) return;
-  badge = createBadge(obs);
+  const privateUrl = stripUrl(url);
+  badge = createBadge(obs, {
+    openPrivate: async () => {
+      const res = (await chrome.runtime.sendMessage({ type: 'open-private', url: privateUrl } satisfies OpenPrivateRequest)) as OpenPrivateResponse | undefined;
+      if (res?.opened) return 'Opened. Compare the price there before you buy.';
+      try {
+        await navigator.clipboard.writeText(privateUrl);
+        return 'Link copied. Open a private window (Cmd+Shift+N, or Ctrl+Shift+N on Windows) and paste it.';
+      } catch {
+        return `Open a private window and paste this link: ${privateUrl}`;
+      }
+    },
+  });
   badge.checking();
   try {
     const res = (await chrome.runtime.sendMessage({ type: 'check', observation: obs } satisfies CheckRequest)) as CheckResponse | undefined;

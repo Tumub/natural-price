@@ -1,8 +1,7 @@
 /**
  * Renders the badge on a locally served fixture and saves screenshots for the
- * README. The "same" state is real end-to-end. The "higher" state is rendered
- * by feeding the badge a synthetic service answer, because no fixture can
- * honestly produce it.
+ * README. Both states are real end-to-end: for "higher" the fixture server
+ * shows the tab an inflated price and the clean fetch reads the genuine one.
  *
  *   npx tsx packages/extension/scripts/screenshot.ts
  */
@@ -36,20 +35,11 @@ for (let i = 0; i < 60 && (await verdict.getAttribute('data-np-verdict')) === 'c
 const host = page.locator('.np');
 await host.screenshot({ path: join(out, 'badge-same.png') });
 
-await page.evaluate(() => {
-  const root = (document.querySelector('[data-natural-price]') as HTMLElement).shadowRoot!;
-  const p = root.querySelector('[data-np-verdict]') as HTMLElement;
-  const box = p.parentElement as HTMLElement;
-  box.dataset.verdict = 'higher';
-  p.setAttribute('data-np-verdict', 'higher');
-  p.textContent = 'You were shown CHF 64.95. A clean session was shown CHF 59.95, 7.7% less.';
-  const c = root.querySelector('.c');
-  if (c) c.textContent = 'Confidence: medium.';
-  const a = document.createElement('div');
-  a.className = 'a';
-  a.textContent = 'Try opening this page in a private window and compare before you buy.';
-  box.insertBefore(a, root.querySelector('details'));
-});
+// The "higher" state is real too: the fixture server shows this tab an
+// inflated price while the clean fetch sees the genuine one.
+await page.goto(fixtures.url('ikea', 'billy-bookcase') + '?np_price=64.95');
+await verdict.waitFor({ timeout: 30_000 });
+for (let i = 0; i < 60 && (await verdict.getAttribute('data-np-verdict')) === 'checking'; i++) await page.waitForTimeout(250);
 await host.screenshot({ path: join(out, 'badge-higher.png') });
 await ctx.close();
 app.close();

@@ -5,6 +5,16 @@ export interface CheckRequest {
   observation: Observation;
 }
 
+export interface OpenPrivateRequest {
+  type: 'open-private';
+  url: string;
+}
+
+export interface OpenPrivateResponse {
+  opened: boolean;
+  reason?: string;
+}
+
 /** Mirrors Comparison in packages/fetch-service/src/compare.ts. */
 export interface CheckResponse {
   comparable: boolean;
