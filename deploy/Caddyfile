@@ -1,0 +1,17 @@
+# TLS is automatic once NP_DOMAIN points at this host.
+# /check, /fetch, /health, /stats -> fetch service (what the extension talks to)
+# /crowd/* -> crowd API read routes, for the open-data export and health
+{$NP_DOMAIN} {
+	encode gzip
+	handle /crowd/* {
+		uri strip_prefix /crowd
+		reverse_proxy crowd:8788
+	}
+	handle {
+		reverse_proxy fetch:8787
+	}
+	log {
+		output stdout
+		format json
+	}
+}
