@@ -23,8 +23,18 @@ export async function startFixtureServer(): Promise<{ server: Server; origin: st
       );
       // ?np_price=X rewrites every JSON-LD price so a test can show the user
       // one price while the clean fetch (query stripped) sees the real one.
-      const fake = new URLSearchParams(query ?? '').get('np_price');
+      const params = new URLSearchParams(query ?? '');
+      const fake = params.get('np_price');
       if (fake) html = html.replace(/("price"\s*:\s*)("?)[0-9.]+\2/g, `$1${fake}`);
+      // ?np_late=ms delays every JSON-LD block by that long, the way app-style
+      // sites fill in product data after the page has already loaded.
+      const late = Number(params.get('np_late') ?? 0);
+      if (late > 0) {
+        html = html.replace(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi, (_m, body: string) => {
+          const b64 = Buffer.from(body, 'utf8').toString('base64');
+          return `<script>setTimeout(function(){var s=document.createElement('script');s.type='application/ld+json';s.text=decodeURIComponent(escape(atob('${b64}')));document.head.appendChild(s);},${late});</script>`;
+        });
+      }
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
     } catch {
       res.writeHead(404).end();
