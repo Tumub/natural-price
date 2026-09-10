@@ -74,7 +74,7 @@
         "url": {
           "type": "string",
           "format": "uri",
-          "description": "Canonical page URL. Query string and fragment removed before sending."
+          "description": "The URL that identifies the offer. Query string and fragment removed before sending, except on sites where the query defines the offer (Booking: dates, guests, rooms, currency); there only those parameters are kept and session and tracking parameters are dropped."
         },
         "observedAt": {
           "type": "string",

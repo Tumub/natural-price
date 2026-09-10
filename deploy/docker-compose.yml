@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: 8787
-      NP_ALLOWED_HOSTS: ${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com}
+      NP_ALLOWED_HOSTS: ${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com,booking.com}
       NP_EXITS: ${NP_EXITS:-direct}
       NP_FETCHES_PER_CHECK: ${NP_FETCHES_PER_CHECK:-1}
       NP_CONCURRENCY: ${NP_CONCURRENCY:-2}
@@ -36,7 +36,7 @@ services:
       PORT: 8788
       NP_CROWD_DB: /data/crowd.sqlite
       NP_CROWD_SECRET: ${NP_CROWD_SECRET:?set NP_CROWD_SECRET in .env}
-      NP_ALLOWED_HOSTS: ${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com}
+      NP_ALLOWED_HOSTS: ${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com,booking.com}
     volumes: [crowd-data:/data]
     mem_limit: 256m
 

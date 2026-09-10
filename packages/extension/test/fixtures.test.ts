@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseHtml } from '../src/dom';
 import { describe, expect, it } from 'vitest';
-import { extract } from '../src/extractors/index';
+import { extract, normalizeUrl } from '../src/extractors/index';
 
 const root = join(__dirname, '..', 'fixtures');
 
@@ -28,7 +28,12 @@ describe('fixtures', () => {
       const obs = extract(parseHtml(html, spec.url), new URL(spec.url), new Date('2026-01-01T00:00:00Z'));
       expect(obs).not.toBeNull();
       expect(obs).toMatchObject(spec.expect);
-      expect(obs!.url).not.toMatch(/[?#]/);
+      // The identifying URL: never a fragment, never tracking or session parameters. Readers that build
+      // the URL themselves (dom) must match the site rule exactly; structured-data readers may report
+      // the page's canonical link instead.
+      expect(obs!.url).not.toMatch(/#|[?&](sid|aid|label|srpvid|utm_[a-z]+)=/);
+      if (obs!.source === 'dom') expect(obs!.url).toBe(normalizeUrl(spec.url));
+      else expect(obs!.url).not.toMatch(/\?/);
       expect(obs!.currency).toMatch(/^[A-Z]{3}$/);
       expect(obs!.price).toBeGreaterThan(0);
     });

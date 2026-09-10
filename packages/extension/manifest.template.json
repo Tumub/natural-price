@@ -10,7 +10,7 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "content_scripts": [
     {
-      "matches": ["https://www.ikea.com/*", "https://www.mediamarkt.ch/*", "https://www.nike.com/*"],
+      "matches": ["https://www.ikea.com/*", "https://www.mediamarkt.ch/*", "https://www.nike.com/*", "https://www.booking.com/hotel/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

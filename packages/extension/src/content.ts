@@ -1,7 +1,7 @@
 import { extract } from './extractors/index';
 import { createBadge, type Badge } from './badge';
 import type { CheckRequest, CheckResponse, OpenPrivateRequest, OpenPrivateResponse } from './messages';
-import { stripUrl } from './url';
+import { normalizeUrl } from './extractors/index';
 
 /**
  * Runs on product pages of the launch sites. Reads the price, asks the
@@ -31,7 +31,7 @@ async function run(): Promise<void> {
 
   const obs = extract(document, url);
   if (!obs) return;
-  const privateUrl = stripUrl(url);
+  const privateUrl = normalizeUrl(url);
   const current = createBadge(obs, {
     openPrivate: async () => {
       const res = (await chrome.runtime.sendMessage({ type: 'open-private', url: privateUrl } satisfies OpenPrivateRequest)) as OpenPrivateResponse | undefined;

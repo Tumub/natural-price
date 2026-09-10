@@ -10,7 +10,7 @@ Anything not in that schema is rejected by the service.
 
 | Field | Example | Why |
 |---|---|---|
-| `url` | `https://example.com/p/12345` | The page to fetch. Canonical URL; query string and fragment removed before sending. |
+| `url` | `https://example.com/p/12345` | The page to fetch. Canonical URL; query string and fragment removed before sending. On Booking.com the dates, guests, rooms and currency are kept because they define the price; the session id and tracking parameters are dropped. |
 | `productKey`, `productKeyType` | `4006381333931`, `gtin` | Identifies the product. GTIN, SKU, MPN or the URL, all read from the page. |
 | `name` | `BILLY Bookcase` | Product name from the page, for the badge and later for the crowd view. |
 | `price` | `129.00` | What you saw. |
