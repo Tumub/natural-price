@@ -2,7 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Server } from 'node:http';
 import { AddressInfo } from 'node:net';
 import { CleanFetcher } from '../src/browser';
+import { CrowdClient } from '../src/crowd';
 import { createApp } from '../src/server';
+import { createCrowdApp } from '../../crowd-api/src/server';
+import { CrowdStore } from '../../crowd-api/src/store';
 import { expectedFor, startFixtureServer } from '../../../test-support/fixture-server';
 
 /** Real headless Chromium, real HTTP, but only against locally served fixtures. */
@@ -13,18 +16,24 @@ describe.skipIf(skip)('fetch-service end to end', () => {
   let fetcher: CleanFetcher;
   let app: Server;
   let api: string;
+  let crowdApp: Server;
+  let crowdApi: string;
 
   beforeAll(async () => {
     fixtures = await startFixtureServer();
     fetcher = new CleanFetcher([{ label: 'a' }, { label: 'b' }]);
     await fetcher.start();
-    app = createApp({ fetcher, allowedHosts: ['127.0.0.1'] });
+    crowdApp = createCrowdApp({ store: new CrowdStore(':memory:', 'test') });
+    await new Promise<void>((r) => crowdApp.listen(0, '127.0.0.1', r));
+    crowdApi = `http://127.0.0.1:${(crowdApp.address() as AddressInfo).port}`;
+    app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], crowd: new CrowdClient(crowdApi) });
     await new Promise<void>((r) => app.listen(0, '127.0.0.1', r));
     api = `http://127.0.0.1:${(app.address() as AddressInfo).port}`;
   }, 60_000);
 
   afterAll(async () => {
     app?.close();
+    crowdApp?.close();
     await fetcher?.stop();
     fixtures?.server.close();
   });
@@ -34,7 +43,7 @@ describe.skipIf(skip)('fetch-service end to end', () => {
 
   it('health lists exits', async () => {
     const r = await fetch(api + '/health').then((r) => r.json());
-    expect(r).toEqual({ ok: true, exits: ['a', 'b'], paused: {} });
+    expect(r).toEqual({ ok: true, exits: ['a', 'b'], paused: {}, crowd: true });
   });
 
   for (const [site, name] of [['ikea', 'billy-bookcase'], ['mediamarkt', 'samsung-soundbar'], ['nike', 'cw2288-111']] as const) {
@@ -62,6 +71,22 @@ describe.skipIf(skip)('fetch-service end to end', () => {
     const exp = await expectedFor('ikea', 'billy-bookcase');
     const [, r] = await post('/check', { observation: { ...exp.expect, url: fixtures.url('ikea', 'billy-bookcase'), observedAt: '2020-01-01T00:00:00Z', source: 'jsonld', extractor: 'jsonld' }, installId: 'd'.repeat(64) });
     expect(r.comparable).toBe(false);
+  }, 60_000);
+
+  it('reaches high confidence once enough other people saw the same price', async () => {
+    const exp = await expectedFor('ikea', 'billy-bookcase');
+    const mk = (price: number) => ({ ...exp.expect, price, url: fixtures.url('ikea', 'billy-bookcase'), observedAt: new Date().toISOString(), source: 'jsonld', extractor: 'jsonld' });
+    // Five other installs report the genuine price straight to the crowd API.
+    for (let i = 1; i <= 5; i++) {
+      const r = await fetch(crowdApi + '/observe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ observation: mk(exp.expect.price), installId: i.toString(16).padStart(64, '0') }) });
+      expect(r.status).toBe(200);
+    }
+    const [, r] = await post('/check', { observation: mk(exp.expect.price), installId: '9'.repeat(64) });
+    // Earlier tests in this file already reported this product, so "others" is at least the five seeded here.
+    expect(r).toMatchObject({ comparable: true, basis: 'clean', verdict: 'same', confidence: 'high', crowd: { window: 'hour', median: exp.expect.price } });
+    expect(r.crowd.others).toBeGreaterThanOrEqual(5);
+    // A crowd answer never carries anything but aggregates.
+    expect(JSON.stringify(r.crowd)).not.toMatch(/[0-9a-f]{64}|billy/);
   }, 60_000);
 
   it('rejects a payload with a field outside the schema', async () => {

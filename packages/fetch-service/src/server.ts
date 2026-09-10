@@ -1,13 +1,13 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import type { Observation } from '@natural-price/extension';
 import { stripUrl } from '@natural-price/extension';
+import { RateLimiter, json, pathOf, readJson, validateCheckBody } from '@natural-price/shared';
 import { CleanFetcher } from './browser';
 import { Breaker } from './breaker';
 import { compare, type CleanResult, type Comparison } from './compare';
-import { RateLimiter } from './ratelimit';
+import { CrowdClient } from './crowd';
 import { Stats } from './stats';
-import { validateCheckBody } from './validate';
 
 /**
  * Two routes.
@@ -27,29 +27,8 @@ export interface ServerOptions {
   fetchesPerCheck?: number;
   breaker?: Breaker;
   stats?: Stats;
-}
-
-const MAX_BODY = 16 * 1024;
-
-function json(res: ServerResponse, status: number, body: unknown): void {
-  res.writeHead(status, {
-    'content-type': 'application/json',
-    'access-control-allow-origin': '*',
-    'access-control-allow-headers': 'content-type',
-    'access-control-allow-methods': 'POST, GET, OPTIONS',
-  });
-  res.end(JSON.stringify(body));
-}
-
-async function readJson(req: IncomingMessage): Promise<unknown> {
-  let size = 0;
-  const chunks: Buffer[] = [];
-  for await (const c of req) {
-    size += (c as Buffer).length;
-    if (size > MAX_BODY) throw new Error('body too large');
-    chunks.push(c as Buffer);
-  }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+  /** Crowd API client. Unset means no crowd baseline. */
+  crowd?: CrowdClient;
 }
 
 function hostAllowed(url: string, allowed: string[] | undefined): boolean {
@@ -75,9 +54,9 @@ export function createApp(opts: ServerOptions) {
   }
 
   return createServer(async (req, res) => {
-    const path = (req.url ?? '/').split('?')[0];
+    const { path } = pathOf(req);
     if (req.method === 'OPTIONS') return json(res, 204, {});
-    if (req.method === 'GET' && path === '/health') return json(res, 200, { ok: true, exits: opts.fetcher.exitLabels, paused: breaker.snapshot() });
+    if (req.method === 'GET' && path === '/health') return json(res, 200, { ok: true, exits: opts.fetcher.exitLabels, paused: breaker.snapshot(), crowd: !!opts.crowd });
     if (req.method === 'GET' && path === '/stats') return json(res, 200, { successRate: stats.successRate(), days: stats.snapshot() });
     if (req.method !== 'POST') return json(res, 404, { error: 'not found' });
 
@@ -104,8 +83,9 @@ export function createApp(opts: ServerOptions) {
       if (!hostAllowed(url, opts.allowedHosts)) return json(res, 403, { error: 'host not allowed' });
       if (!limiter.allow('check:' + hash(body.installId))) return json(res, 429, { error: 'rate limited' });
       const started = Date.now();
-      const cleans = await guardedFetch(url);
-      const result: Comparison = compare({ ...yours, url }, cleans);
+      // Clean fetch and crowd lookup run side by side; the crowd never delays the badge beyond its own timeout.
+      const [cleans, crowd] = await Promise.all([guardedFetch(url), opts.crowd ? opts.crowd.observe({ ...yours, url }, body.installId) : Promise.resolve(null)]);
+      const result: Comparison = compare({ ...yours, url }, cleans, crowd);
       stats.record(new URL(url).hostname, cleans, result.verdict);
       console.log(JSON.stringify({ t: new Date().toISOString(), host: new URL(url).hostname, ms: Date.now() - started, statuses: cleans.map((c) => c.status), verdict: result.verdict }));
       return json(res, 200, result);

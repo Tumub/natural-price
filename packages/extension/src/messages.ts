@@ -18,6 +18,8 @@ export interface OpenPrivateResponse {
 /** Mirrors Comparison in packages/fetch-service/src/compare.ts. */
 export interface CheckResponse {
   comparable: boolean;
+  basis: 'clean' | 'crowd' | 'none';
+  crowd?: { window: 'hour' | 'day'; others: number; median: number; min: number; max: number };
   reasons: string[];
   yours: { price: number; currency: string };
   clean?: { price: number; currency: string; exitLocation: string };

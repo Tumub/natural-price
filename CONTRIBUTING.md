@@ -46,6 +46,8 @@ npm run test:unit                   # fast, no browser
 npm test                            # includes end-to-end with headless Chromium
 npm run demo -- <url-or-fixture.html>
 npm run service                     # fetch service on :8787
+npm run crowd                       # crowd API on :8788
+npm run build:extension:firefox     # packages/extension/dist-firefox
 npm run build:extension             # packages/extension/dist, load unpacked
 npm run live-check -- 3             # real sites, before a release
 npm run blocking-sweep              # which sites answer a clean fetch

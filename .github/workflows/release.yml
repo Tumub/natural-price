@@ -15,10 +15,12 @@ jobs:
           cache: npm
       - run: npm ci
       # Set the NP_SERVICE_URL repository variable to the public fetch-service origin before tagging.
-      - run: npm run build:extension
+      - run: npm run build:extension && npm run package
         env:
           NP_SERVICE_URL: ${{ vars.NP_SERVICE_URL || 'http://localhost:8787' }}
-      - run: npm run package
+      - run: npm run build:extension:firefox && npm run package:firefox
+        env:
+          NP_SERVICE_URL: ${{ vars.NP_SERVICE_URL || 'http://localhost:8787' }}
       - run: gh release create "$GITHUB_REF_NAME" natural-price-extension-*.zip --title "$GITHUB_REF_NAME" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

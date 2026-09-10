@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p packages/extension/tsconfig.json --noEmit && tsc -p packages/fetch-service/tsconfig.json --noEmit",
+    "typecheck": "tsc -p packages/shared/tsconfig.json --noEmit && tsc -p packages/extension/tsconfig.json --noEmit && tsc -p packages/fetch-service/tsconfig.json --noEmit && tsc -p packages/crowd-api/tsconfig.json --noEmit",
     "demo": "tsx packages/extension/src/cli.ts",
     "add-fixture": "tsx packages/extension/src/tools/add-fixture.ts",
     "build:extension": "node packages/extension/build.mjs",
@@ -16,7 +16,10 @@
     "live-check": "tsx packages/fetch-service/scripts/live-check.ts",
     "screenshots": "tsx packages/extension/scripts/screenshot.ts",
     "blocking-sweep": "tsx packages/fetch-service/scripts/blocking-sweep.ts",
-    "package": "node packages/extension/package.mjs"
+    "package": "node packages/extension/package.mjs",
+    "build:extension:firefox": "NP_TARGET=firefox node packages/extension/build.mjs",
+    "package:firefox": "NP_TARGET=firefox node packages/extension/package.mjs",
+    "crowd": "tsx packages/crowd-api/src/index.ts"
   },
   "devDependencies": {
     "@types/chrome": "^0.2.9",
