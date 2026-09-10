@@ -20,6 +20,8 @@ Anything not in that schema is rejected by the service.
 | `source`, `extractor` | `jsonld`, `jsonld` | Which reader produced the price, so broken readers can be found. |
 | `variantCount`, `priceRange` | `29`, `{min, max}` | Only on pages listing several variants. Read from the page. |
 | `installId` | SHA-256 of a random UUID | Rate limiting only. Not linked to any account. Regenerated if you reinstall. |
+| `clientClean` | same fields as the observation | Only in private-tab or both mode: the same page read in a private tab on your device. Same address, no cookies. |
+| `skipServer` | `true` | Only in private-tab mode: tells the service not to open the page itself. |
 
 ## What the fetch service forwards to the crowd API
 
@@ -37,6 +39,15 @@ One row per install per product per hour: a repeat replaces the earlier
 row. Aggregates (count, distinct installs, minimum, maximum, median) are
 computed with the SQL in [docs/crowd-aggregation.sql](docs/crowd-aggregation.sql)
 and published as an open dataset; see [docs/open-data.md](docs/open-data.md).
+
+## The private tab on your device
+
+In private-tab or both mode the extension opens the product page once more
+in a tab with no cookies, login or history (an incognito window in Chrome,
+a temporary container in Firefox), reads the price with the same code, and
+closes the tab. The shop sees one extra anonymous page view from your
+address. The extension reads nothing else from that tab and keeps nothing
+from it.
 
 ## What is never sent
 

@@ -93,7 +93,7 @@ export function compare(yours: Observation, cleans: CleanResult[], crowdAnswer: 
   const usable = cleans.filter((c) => c.status === 'ok' && c.observation);
   if (usable.length === 0) {
     const blocked = cleans.filter((c) => c.status === 'blocked').length;
-    reasons.push(blocked ? 'the site refused the clean fetch' : 'no clean price could be read');
+    reasons.push(cleans.length === 0 ? 'no clean session was available' : blocked ? 'the site refused the clean fetch' : 'no clean price could be read');
     return crowdOnly(base, yours, crowd, reasons);
   }
 
@@ -125,7 +125,10 @@ export function compare(yours: Observation, cleans: CleanResult[], crowdAnswer: 
   const prices = valid.map((v) => v.o.price);
   const spread = (Math.max(...prices) - Math.min(...prices)) / Math.min(...prices);
   let confidence: Confidence = 'low';
-  if (valid.length >= 2 && exits.size >= 2 && spread <= AGREE_THRESHOLD) confidence = 'medium';
+  if (valid.length >= 2 && exits.size >= 2 && spread <= AGREE_THRESHOLD) {
+    confidence = 'medium';
+    if (exits.has('private-tab')) reasons.push('a private tab on your device and the server agree');
+  }
   if (valid.length >= 2 && spread > AGREE_THRESHOLD) {
     reasons.push('clean fetches disagree with each other; the site may be A/B testing or pricing by location');
   }
