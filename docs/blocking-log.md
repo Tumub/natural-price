@@ -33,7 +33,10 @@ First checks through the deployed service at `the deployed service`.
 
 MediaMarkt is the first launch site that needs either a residential exit
 (issue #9) or the crowd baseline. Until then its badge says the site
-refused the clean fetch.
+refused the clean fetch. Since v0.5.0 the private tab on the user's device
+covers it.
+
+| booking.com (hotel page) | no price | serves a JavaScript challenge to the server; the private tab on the device reads the room table normally |
 
 ## 2026-09-10, direct connection from Switzerland, no proxy
 

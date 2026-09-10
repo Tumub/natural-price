@@ -5,6 +5,13 @@ Manual checks against the real launch sites, newest first. Run with
 anonymous requests here, so any verdict other than `same` is a false
 positive of the pipeline, not a finding about the site.
 
+## 2026-09-10, v0.6.0: Booking through production
+
+Server-only: "no clean price could be read" (challenge page). Private tab
+only with the same observation: comparable, basis clean, exit private-tab.
+Hotel Spalentor Basel, 28 Sep to 2 Oct, 2 adults: CHF 841 for the
+highlighted room, table range CHF 784 to 993.
+
 ## 2026-09-10, first production checks at the deployed service
 
 Exit `de` from the Hetzner Falkenstein address, one browser context.
