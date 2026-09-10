@@ -1,5 +1,12 @@
 # Deploy
 
+**Production, since 2026-09-10:** `https://your-server.example` on the Coolify
+host, project `natural-price`, apps `natural-price-fetch` (1 GB cap, one
+browser context, exit `de`) and `natural-price-crowd` (128 MB cap, volume
+`/data`). The crowd API has no public route; the fetch service reaches it
+as `http://natural-price-crowd:8788`. Redeploy with `deploy/coolify.sh`
+using the same variables. Release zips are built against this origin.
+
 One VPS with 2 GB of memory, Docker, and a domain pointing at it. Both
 services, plus Caddy for automatic TLS, in one `docker compose up`.
 

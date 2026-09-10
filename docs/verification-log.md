@@ -5,6 +5,20 @@ Manual checks against the real launch sites, newest first. Run with
 anonymous requests here, so any verdict other than `same` is a false
 positive of the pipeline, not a finding about the site.
 
+## 2026-09-10, first production checks at the deployed service
+
+Exit `de` from the Hetzner Falkenstein address, one browser context.
+
+| Site | Result | Latency |
+|---|---|---|
+| ikea.com/ch | same, low confidence | 1.7 to 2.3 s |
+| nike.com/ch | same, low confidence | 2.0 s |
+| mediamarkt.ch | clean fetch refused (403 to the datacenter address) | 2.2 s |
+
+Certificate from Let's Encrypt via Coolify's Traefik. Crowd path verified
+with six synthetic installs on the IKEA product (see blocking-log.md for
+the MediaMarkt consequence).
+
 ## 2026-09-10, blocking sweep with full Chromium
 
 14 sites, one clean fetch each, direct Swiss connection. 6 returned a price;

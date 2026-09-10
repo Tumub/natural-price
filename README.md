@@ -11,11 +11,13 @@ same hour.
 
 [![ci](https://github.com/Tumub/natural-price/actions/workflows/ci.yml/badge.svg)](https://github.com/Tumub/natural-price/actions/workflows/ci.yml)
 
-Status: **phase 4 built, awaiting deployment and testers**. Extension,
+Status: **deployed, private beta open**. Production fetch service and
+crowd API run at `the deployed service`; release zips for Chrome and Firefox are
+on the [releases page](https://github.com/Tumub/natural-price/releases). Extension,
 clean-room fetch service, comparison rules and the crowd baseline work end
 to end on three launch sites (IKEA, MediaMarkt, Nike, Swiss storefronts),
-for Chrome and Firefox. Not yet in any store. Read [PLAN.md](PLAN.md) for
-the roadmap and the open issues for what to pick up.
+Not yet in any store. Read [PLAN.md](PLAN.md) for the roadmap and the
+open issues for what to pick up.
 
 <p>
   <img src="docs/assets/badge-same.png" width="340" alt="Badge: you were shown CHF 59.95, a clean session was shown the same">
