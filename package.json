@@ -14,7 +14,9 @@
     "service": "tsx packages/fetch-service/src/index.ts",
     "test:unit": "vitest run --exclude '**/*.e2e.test.ts'",
     "live-check": "tsx packages/fetch-service/scripts/live-check.ts",
-    "screenshots": "tsx packages/extension/scripts/screenshot.ts"
+    "screenshots": "tsx packages/extension/scripts/screenshot.ts",
+    "blocking-sweep": "tsx packages/fetch-service/scripts/blocking-sweep.ts",
+    "package": "node packages/extension/package.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.2.9",

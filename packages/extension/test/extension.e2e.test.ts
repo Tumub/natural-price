@@ -56,6 +56,21 @@ describe.skipIf(skip)('extension end to end', () => {
     await page.close();
   }, 60_000);
 
+  it('shows "higher" with the private-window button when your price is above the clean one', async () => {
+    const page = await context.newPage();
+    // The fixture server shows this tab an inflated price; the clean fetch (query stripped) sees the real one.
+    await page.goto(fixtures.url('ikea', 'billy-bookcase') + '?np_price=64.95');
+    const verdict = page.locator('[data-np-verdict]');
+    await expect.poll(() => verdict.getAttribute('data-np-verdict'), { timeout: 30_000 }).not.toBe('checking');
+    expect(await verdict.textContent()).toMatch(/64\.95.*59\.95.*8\.3% less/);
+    const button = page.locator('[data-np-action="open-private"]');
+    await expect.poll(() => button.count()).toBe(1);
+    await button.click();
+    const status = page.locator('[data-np-status]');
+    await expect.poll(() => status.textContent(), { timeout: 10_000 }).toMatch(/Opened|Link copied|paste this link/);
+    await page.close();
+  }, 60_000);
+
   it('shows the badge on the Nike variant page too', async () => {
     const page = await context.newPage();
     await page.goto(fixtures.url('nike', 'cw2288-111'));

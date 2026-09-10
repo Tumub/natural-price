@@ -48,7 +48,13 @@ npm run demo -- <url-or-fixture.html>
 npm run service                     # fetch service on :8787
 npm run build:extension             # packages/extension/dist, load unpacked
 npm run live-check -- 3             # real sites, before a release
+npm run blocking-sweep              # which sites answer a clean fetch
+npm run package                     # zip dist/ for testers
 ```
+
+Releases: set the `NP_SERVICE_URL` repository variable to the public
+fetch-service origin, then push a tag `vX.Y.Z`. The release workflow builds
+the extension against that origin and attaches the zip.
 
 TypeScript, Vitest, jsdom, Playwright, esbuild. Node 20 or newer. Open an
 issue before starting anything bigger than an extractor so nobody duplicates

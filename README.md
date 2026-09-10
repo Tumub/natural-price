@@ -11,9 +11,10 @@ same hour.
 
 [![ci](https://github.com/Tumub/natural-price/actions/workflows/ci.yml/badge.svg)](https://github.com/Tumub/natural-price/actions/workflows/ci.yml)
 
-Status: **phase 2**. The extension, the clean-room fetch service and the
-comparison rules work end to end on three launch sites (IKEA, MediaMarkt,
-Nike, Swiss storefronts). Not yet in any store; you load it unpacked. Read
+Status: **phase 3, private beta**. The extension, the clean-room fetch
+service and the comparison rules work end to end on three launch sites
+(IKEA, MediaMarkt, Nike, Swiss storefronts). Testers load it unpacked from
+a release zip; see [docs/beta/install.md](docs/beta/install.md). Read
 [PLAN.md](PLAN.md) for the roadmap and the open issues for what to pick up.
 
 <p>
@@ -21,8 +22,9 @@ Nike, Swiss storefronts). Not yet in any store; you load it unpacked. Read
   <img src="docs/assets/badge-higher.png" width="340" alt="Badge: you were shown CHF 64.95, a clean session was shown CHF 59.95, 7.7% less">
 </p>
 
-Left: a real end-to-end result. Right: what the badge looks like when a
-difference is found, rendered from a synthetic answer for illustration.
+Both are real end-to-end results against a locally served copy of the IKEA
+page. On the right the tab was shown an inflated price and the clean fetch
+read the genuine one.
 
 ## Try it
 
@@ -128,9 +130,10 @@ Two baselines, because each fails differently:
 
 ```
 packages/extension/      browser extension (Manifest V3), extractors, fixtures
-packages/fetch-service/  clean-room fetch API (Playwright) and comparison rules
+packages/fetch-service/  clean-room fetch API (Playwright), comparison rules, stats
 packages/crowd-api/      anonymous observation store and aggregation (phase 4)
-docs/                    launch sites, comparison rules, payload schema, verification log
+docs/                    launch sites, comparison rules, payload schema, blocking log
+docs/beta/               tester install, feedback, recruiting, weekly summary
 test-support/            local fixture server used by the end-to-end tests
 ```
 

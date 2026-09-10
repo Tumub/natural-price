@@ -1,5 +1,5 @@
 import { getInstallId } from './install-id';
-import type { CheckRequest, CheckResponse } from './messages';
+import type { CheckRequest, CheckResponse, OpenPrivateRequest, OpenPrivateResponse } from './messages';
 
 /**
  * The only network call the extension makes: POST the observation to the
@@ -18,8 +18,28 @@ async function check(req: CheckRequest): Promise<CheckResponse> {
   return (await res.json()) as CheckResponse;
 }
 
-chrome.runtime.onMessage.addListener((msg: CheckRequest, _sender, sendResponse) => {
-  if (msg?.type !== 'check') return false;
-  check(msg).then(sendResponse, (e: Error) => sendResponse({ error: e.message } satisfies Partial<CheckResponse>));
-  return true;
+/**
+ * Open the page in an incognito window. Works only when the user has allowed
+ * the extension in incognito; otherwise Chrome throws and the content script
+ * falls back to copying the link.
+ */
+async function openPrivate(req: OpenPrivateRequest): Promise<OpenPrivateResponse> {
+  try {
+    await chrome.windows.create({ url: req.url, incognito: true, focused: true });
+    return { opened: true };
+  } catch (e) {
+    return { opened: false, reason: (e as Error).message };
+  }
+}
+
+chrome.runtime.onMessage.addListener((msg: CheckRequest | OpenPrivateRequest, _sender, sendResponse) => {
+  if (msg?.type === 'check') {
+    check(msg).then(sendResponse, (e: Error) => sendResponse({ error: e.message } satisfies Partial<CheckResponse>));
+    return true;
+  }
+  if (msg?.type === 'open-private') {
+    openPrivate(msg).then(sendResponse);
+    return true;
+  }
+  return false;
 });

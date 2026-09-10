@@ -1,0 +1,24 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Set the NP_SERVICE_URL repository variable to the public fetch-service origin before tagging.
+      - run: npm run build:extension
+        env:
+          NP_SERVICE_URL: ${{ vars.NP_SERVICE_URL || 'http://localhost:8787' }}
+      - run: npm run package
+      - run: gh release create "$GITHUB_REF_NAME" natural-price-extension-*.zip --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

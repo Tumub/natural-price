@@ -34,7 +34,7 @@ describe.skipIf(skip)('fetch-service end to end', () => {
 
   it('health lists exits', async () => {
     const r = await fetch(api + '/health').then((r) => r.json());
-    expect(r).toEqual({ ok: true, exits: ['a', 'b'] });
+    expect(r).toEqual({ ok: true, exits: ['a', 'b'], paused: {} });
   });
 
   for (const [site, name] of [['ikea', 'billy-bookcase'], ['mediamarkt', 'samsung-soundbar'], ['nike', 'cw2288-111']] as const) {
@@ -63,6 +63,22 @@ describe.skipIf(skip)('fetch-service end to end', () => {
     const [, r] = await post('/check', { observation: { ...exp.expect, url: fixtures.url('ikea', 'billy-bookcase'), observedAt: '2020-01-01T00:00:00Z', source: 'jsonld', extractor: 'jsonld' }, installId: 'd'.repeat(64) });
     expect(r.comparable).toBe(false);
   }, 60_000);
+
+  it('rejects a payload with a field outside the schema', async () => {
+    const exp = await expectedFor('ikea', 'billy-bookcase');
+    const observation = { ...exp.expect, url: fixtures.url('ikea', 'billy-bookcase'), observedAt: new Date().toISOString(), source: 'jsonld', extractor: 'jsonld', sessionCookie: 'leak' };
+    const [status, r] = await post('/check', { observation, installId: 'f'.repeat(64) });
+    expect(status).toBe(400);
+    expect(r.details.join()).toMatch(/additional/);
+  });
+
+  it('exposes stats with no identifiers', async () => {
+    const r = await fetch(api + '/stats').then((r) => r.json());
+    expect(r.successRate).toBeGreaterThan(0);
+    const day = Object.keys(r.days)[0]!;
+    expect(r.days[day]['127.0.0.1']).toMatchObject({ checks: expect.any(Number), ok: expect.any(Number) });
+    expect(JSON.stringify(r)).not.toMatch(/[a-f]{64}|billy/);
+  });
 
   it('reports no_price for a page without a product', async () => {
     const [, r] = await post('/fetch', { url: fixtures.origin + '/nope/nope.html', installId: 'e'.repeat(64) });
