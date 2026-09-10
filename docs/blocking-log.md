@@ -21,6 +21,20 @@ table. Newest first.
    spoofing beyond a consistent profile. A site that still blocks a single
    clean page load per user request is a site for the crowd baseline.
 
+## 2026-09-10, production: Hetzner Falkenstein datacenter address, exit `de`
+
+First checks through the deployed service at `the deployed service`.
+
+| Site | Result | Note |
+|---|---|---|
+| ikea.com/ch | price | 1.7 s |
+| nike.com/ch | price | 2.0 s |
+| mediamarkt.ch | 403 | answers a residential Swiss address the same day; blocks the datacenter address |
+
+MediaMarkt is the first launch site that needs either a residential exit
+(issue #9) or the crowd baseline. Until then its badge says the site
+refused the clean fetch.
+
 ## 2026-09-10, direct connection from Switzerland, no proxy
 
 Full Chromium new headless, one fetch per site.
