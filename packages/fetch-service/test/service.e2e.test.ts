@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Server } from 'node:http';
 import { AddressInfo } from 'node:net';
+import { RateLimiter } from '@natural-price/shared';
 import { CleanFetcher } from '../src/browser';
 import { CrowdClient } from '../src/crowd';
 import { createApp } from '../src/server';
@@ -26,7 +27,7 @@ describe.skipIf(skip)('fetch-service end to end', () => {
     crowdApp = createCrowdApp({ store: new CrowdStore(':memory:', 'test') });
     await new Promise<void>((r) => crowdApp.listen(0, '127.0.0.1', r));
     crowdApi = `http://127.0.0.1:${(crowdApp.address() as AddressInfo).port}`;
-    app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], crowd: new CrowdClient(crowdApi) });
+    app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], crowd: new CrowdClient(crowdApi), ipLimiter: new RateLimiter(1000, 10000) });
     await new Promise<void>((r) => app.listen(0, '127.0.0.1', r));
     api = `http://127.0.0.1:${(app.address() as AddressInfo).port}`;
   }, 60_000);
@@ -118,6 +119,18 @@ describe.skipIf(skip)('fetch-service end to end', () => {
     expect(r.days[day]['127.0.0.1']).toMatchObject({ checks: expect.any(Number), ok: expect.any(Number) });
     expect(JSON.stringify(r)).not.toMatch(/[a-f]{64}|billy/);
   });
+
+  it('limits by client address regardless of install id', async () => {
+    const strict = createApp({ fetcher, allowedHosts: ['127.0.0.1'], ipLimiter: new RateLimiter(2, 100) });
+    await new Promise<void>((r) => strict.listen(0, '127.0.0.1', r));
+    const base = `http://127.0.0.1:${(strict.address() as AddressInfo).port}`;
+    const hit = (ip: string, id: string) => fetch(base + '/fetch', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip }, body: JSON.stringify({ url: fixtures.origin + '/nope/nope.html', installId: id }) }).then((r) => r.status);
+    expect(await hit('203.0.113.9', 'a'.repeat(64))).not.toBe(429);
+    expect(await hit('203.0.113.9', 'b'.repeat(64))).not.toBe(429);
+    expect(await hit('203.0.113.9', 'c'.repeat(64))).toBe(429);
+    expect(await hit('203.0.113.10', 'c'.repeat(64))).not.toBe(429);
+    strict.close();
+  }, 60_000);
 
   it('reports no_price for a page without a product', async () => {
     const [, r] = await post('/fetch', { url: fixtures.origin + '/nope/nope.html', installId: 'e'.repeat(64) });

@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage } from 'node:http';
 import { createHash } from 'node:crypto';
 import type { Observation } from '@natural-price/extension';
 import { normalizeUrl } from '@natural-price/extension';
@@ -20,7 +20,10 @@ import { Stats } from './stats';
 
 export interface ServerOptions {
   fetcher: CleanFetcher;
+  /** Per install id. */
   limiter?: RateLimiter;
+  /** Per client address. Install ids are chosen by the client, so this is the limit that holds. */
+  ipLimiter?: RateLimiter;
   /** Only fetch URLs on these hosts (suffix match). Empty means any host. */
   allowedHosts?: string[];
   /** How many exits to use per check. */
@@ -39,6 +42,7 @@ function hostAllowed(url: string, allowed: string[] | undefined): boolean {
 
 export function createApp(opts: ServerOptions) {
   const limiter = opts.limiter ?? new RateLimiter();
+  const ipLimiter = opts.ipLimiter ?? new RateLimiter(20, 300);
   const perCheck = opts.fetchesPerCheck ?? 2;
   const breaker = opts.breaker ?? new Breaker();
   const stats = opts.stats ?? new Stats();
@@ -59,6 +63,7 @@ export function createApp(opts: ServerOptions) {
     if (req.method === 'GET' && path === '/health') return json(res, 200, { ok: true, exits: opts.fetcher.exitLabels, paused: breaker.snapshot(), crowd: !!opts.crowd });
     if (req.method === 'GET' && path === '/stats') return json(res, 200, { successRate: stats.successRate(), days: stats.snapshot() });
     if (req.method !== 'POST') return json(res, 404, { error: 'not found' });
+    if (!ipLimiter.allow('ip:' + clientKey(req))) return json(res, 429, { error: 'rate limited' });
 
     let body: any;
     try {
@@ -105,4 +110,11 @@ export function createApp(opts: ServerOptions) {
 
 function hash(s: string): string {
   return createHash('sha256').update(s).digest('hex').slice(0, 16);
+}
+
+/** Client address behind a reverse proxy, hashed before it is used as a key and never logged. */
+function clientKey(req: IncomingMessage): string {
+  const xff = req.headers['x-forwarded-for'];
+  const first = (Array.isArray(xff) ? xff[0] : xff)?.split(',')[0]?.trim();
+  return hash(first || req.socket.remoteAddress || 'unknown');
 }
