@@ -14,6 +14,11 @@ describe('payload schema', () => {
     expect(validateCheckBody({ ...good, email: 'x@y' }).ok).toBe(false);
     expect(validateCheckBody({ ...good, observation: { ...good.observation, cookie: 'abc' } }).ok).toBe(false);
   });
+  it('accepts a device clean session and skipServer, and validates the nested observation', () => {
+    expect(validateCheckBody({ ...good, clientClean: good.observation, skipServer: true })).toEqual({ ok: true });
+    expect(validateCheckBody({ ...good, clientClean: { ...good.observation, cookie: 'x' } }).ok).toBe(false);
+    expect(validateCheckBody({ ...good, skipServer: 'yes' }).ok).toBe(false);
+  });
   it('rejects a raw install id, a bad currency and a non-positive price', () => {
     expect(validateCheckBody({ ...good, installId: 'not-hashed' }).ok).toBe(false);
     expect(validateCheckBody({ ...good, observation: { ...good.observation, currency: 'chf' } }).ok).toBe(false);

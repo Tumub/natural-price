@@ -121,6 +121,12 @@ they saw: "5 other people saw a median of CHF 840.90 this hour." A clean
 fetch that the crowd confirms is high confidence. When a site blocks every
 clean session, the crowd median is the fallback.
 
+The clean session can also run on your own device: a private tab with no
+cookies or login, opened and closed by the extension. Choose server, private
+tab, or both in the options. The private tab uses your own address, so shops
+cannot block it, but it cannot see location or device effects; the server
+can, and some shops block it. Both together give medium confidence.
+
 Two baselines, because each fails differently:
 
 | Baseline | Strength | Weakness |

@@ -89,6 +89,20 @@ describe.skipIf(skip)('fetch-service end to end', () => {
     expect(JSON.stringify(r.crowd)).not.toMatch(/[0-9a-f]{64}|billy/);
   }, 60_000);
 
+  it('uses a device clean session: corroborating the server, or alone with skipServer', async () => {
+    const exp = await expectedFor('nike', 'cw2288-111');
+    const mk = (price: number) => ({ ...exp.expect, price, url: fixtures.url('nike', 'cw2288-111'), observedAt: new Date().toISOString(), source: 'jsonld', extractor: 'jsonld' });
+    const [, both] = await post('/check', { observation: mk(exp.expect.price), clientClean: mk(exp.expect.price), installId: '1'.repeat(64) });
+    expect(both).toMatchObject({ comparable: true, verdict: 'same', confidence: 'medium', clean: { exitLocation: 'a' } });
+    expect(both.cleanFetches.map((c: any) => c.exitLocation)).toEqual(['a', 'b', 'private-tab']);
+    const [, alone] = await post('/check', { observation: mk(exp.expect.price * 1.1), clientClean: mk(exp.expect.price), skipServer: true, installId: '2'.repeat(64) });
+    expect(alone).toMatchObject({ comparable: true, verdict: 'higher', confidence: 'low', clean: { exitLocation: 'private-tab' } });
+    expect(alone.cleanFetches).toHaveLength(1);
+    const [, none] = await post('/check', { observation: mk(exp.expect.price), skipServer: true, installId: '3'.repeat(64) });
+    expect(none.comparable).toBe(false);
+    expect(none.reasons[0]).toMatch(/no clean session/);
+  }, 60_000);
+
   it('rejects a payload with a field outside the schema', async () => {
     const exp = await expectedFor('ikea', 'billy-bookcase');
     const observation = { ...exp.expect, url: fixtures.url('ikea', 'billy-bookcase'), observedAt: new Date().toISOString(), source: 'jsonld', extractor: 'jsonld', sessionCookie: 'leak' };

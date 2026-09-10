@@ -84,9 +84,17 @@ export function createApp(opts: ServerOptions) {
       if (!limiter.allow('check:' + hash(body.installId))) return json(res, 429, { error: 'rate limited' });
       const started = Date.now();
       // Clean fetch and crowd lookup run side by side; the crowd never delays the badge beyond its own timeout.
-      const [cleans, crowd] = await Promise.all([guardedFetch(url), opts.crowd ? opts.crowd.observe({ ...yours, url }, body.installId) : Promise.resolve(null)]);
+      // A clean session the extension ran on the user's own device, if the user chose that.
+      const client: CleanResult[] = body.clientClean
+        ? [{ observation: { ...(body.clientClean as Observation), url: stripUrl((body.clientClean as Observation).url) }, status: 'ok', exitLocation: 'private-tab' }]
+        : [];
+      const [serverCleans, crowd] = await Promise.all([
+        body.skipServer === true ? Promise.resolve([] as CleanResult[]) : guardedFetch(url),
+        opts.crowd ? opts.crowd.observe({ ...yours, url }, body.installId) : Promise.resolve(null),
+      ]);
+      const cleans = [...serverCleans, ...client];
       const result: Comparison = compare({ ...yours, url }, cleans, crowd);
-      stats.record(new URL(url).hostname, cleans, result.verdict);
+      stats.record(new URL(url).hostname, serverCleans, result.verdict);
       console.log(JSON.stringify({ t: new Date().toISOString(), host: new URL(url).hostname, ms: Date.now() - started, statuses: cleans.map((c) => c.status), verdict: result.verdict }));
       return json(res, 200, result);
     }

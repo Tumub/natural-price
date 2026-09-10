@@ -13,6 +13,7 @@ contributors. Slip is expected; scope is fixed per phase, dates are not.
 | Browser target | Chrome first, Firefox in phase 4 | Audience size. Firefox keeps blocking webRequest, which matters for later experiments. |
 | Sterile browsing shield | Out of scope | Manifest V3 allows only static header rules and forbids touching referer. Not buildable in Chrome. |
 | Price extraction | schema.org JSON-LD `Offer` first, per-site DOM fallback | Covers most large retailers with one generic extractor. |
+| Clean session on the device (added 2026-09-10) | Optional private tab on the user's machine, alongside or instead of the server | First production day showed MediaMarkt blocking the datacenter address. A private tab uses the user's own address, costs nothing, and covers the commonest case, logged in versus not. The server stays for location and device effects. |
 
 ## Phase 1: Foundation (2026-09-10 to 2026-09-30)
 

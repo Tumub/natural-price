@@ -5,7 +5,10 @@
   "description": "Everything the extension sends to the fetch service. If the code sends a field not listed here, that is a bug. See PRIVACY.md.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["observation", "installId"],
+  "required": [
+    "observation",
+    "installId"
+  ],
   "properties": {
     "installId": {
       "type": "string",
@@ -13,26 +16,98 @@
       "pattern": "^[0-9a-f]{64}$"
     },
     "observation": {
+      "$ref": "#/$defs/observation"
+    },
+    "clientClean": {
+      "$ref": "#/$defs/observation",
+      "description": "Optional. The same page read in a private tab on the user's device: no cookies, login or history, same address and device. Sent only when the user chose the private-tab or both mode."
+    },
+    "skipServer": {
+      "type": "boolean",
+      "description": "Optional. When true the service does not open the page itself and compares against clientClean and the crowd only."
+    }
+  },
+  "$defs": {
+    "observation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["productKey", "productKeyType", "price", "currency", "url", "observedAt", "source", "extractor"],
+      "required": [
+        "productKey",
+        "productKeyType",
+        "price",
+        "currency",
+        "url",
+        "observedAt",
+        "source",
+        "extractor"
+      ],
       "properties": {
-        "productKey": { "type": "string", "description": "GTIN, SKU, MPN or canonical URL." },
-        "productKeyType": { "enum": ["gtin", "sku", "mpn", "url"] },
-        "name": { "type": "string", "description": "Product name as shown on the page." },
-        "price": { "type": "number", "exclusiveMinimum": 0 },
-        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "country": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "Destination country shown by the page. Never derived from the user." },
-        "url": { "type": "string", "format": "uri", "description": "Canonical page URL. Query string and fragment removed before sending." },
-        "observedAt": { "type": "string", "format": "date-time" },
-        "source": { "enum": ["jsonld", "dom"] },
-        "extractor": { "type": "string" },
-        "variantCount": { "type": "integer", "minimum": 2 },
+        "productKey": {
+          "type": "string",
+          "description": "GTIN, SKU, MPN or canonical URL."
+        },
+        "productKeyType": {
+          "enum": [
+            "gtin",
+            "sku",
+            "mpn",
+            "url"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Product name as shown on the page."
+        },
+        "price": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "Destination country shown by the page. Never derived from the user."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonical page URL. Query string and fragment removed before sending."
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "enum": [
+            "jsonld",
+            "dom"
+          ]
+        },
+        "extractor": {
+          "type": "string"
+        },
+        "variantCount": {
+          "type": "integer",
+          "minimum": 2
+        },
         "priceRange": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["min", "max"],
-          "properties": { "min": { "type": "number" }, "max": { "type": "number" } }
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          }
         }
       }
     }

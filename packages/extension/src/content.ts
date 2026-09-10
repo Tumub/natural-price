@@ -23,7 +23,7 @@ async function run(): Promise<void> {
   const obs = extract(document, url);
   if (!obs) return;
   const privateUrl = stripUrl(url);
-  badge = createBadge(obs, {
+  const current = createBadge(obs, {
     openPrivate: async () => {
       const res = (await chrome.runtime.sendMessage({ type: 'open-private', url: privateUrl } satisfies OpenPrivateRequest)) as OpenPrivateResponse | undefined;
       if (res?.opened) return 'Opened. Compare the price there before you buy.';
@@ -35,13 +35,18 @@ async function run(): Promise<void> {
       }
     },
   });
-  badge.checking();
+  badge = current;
+  current.checking();
   try {
     const res = (await chrome.runtime.sendMessage({ type: 'check', observation: obs } satisfies CheckRequest)) as CheckResponse | undefined;
-    if (!res) badge.error('no answer from the extension');
-    else badge.result(res);
+    if (!res) current.error('no answer from the extension');
+    else if (res.probe) {
+      // This tab is the extension's own clean session; nobody is looking at it.
+      current.remove();
+      badge = null;
+    } else current.result(res);
   } catch (e) {
-    badge.error((e as Error).message);
+    current.error((e as Error).message);
   }
 }
 
