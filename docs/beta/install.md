@@ -10,8 +10,19 @@ Five minutes. Chrome, Edge, Brave or any Chromium browser. No account.
 4. Open a product page on ikea.com, mediamarkt.ch or nike.com. A small
    "Natural Price" panel appears bottom right within a few seconds.
 
-If the panel says it could not reach the service, open the extension's
-options and check the service URL matches the one in the release notes.
+5. Open the extension's options (right-click the icon, Options) and choose
+   **Both** under "Where the clean session runs". In Chrome, also open
+   `chrome://extensions`, find Natural Price, Details, and switch on
+   **Allow in Incognito**; that is what lets the extension open a private
+   tab on your device. Firefox needs nothing extra.
+
+"Both" means the price you were shown is compared with a private tab on
+your own device and with the server. Some shops block the server
+(MediaMarkt does); the private tab still works there. The private tab opens
+minimised and closes itself.
+
+If the panel says it could not reach the service, open the options and
+check the service URL matches the one in the release notes.
 
 ## What you will see
 
