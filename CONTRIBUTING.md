@@ -7,15 +7,20 @@ do is small and concrete.
 
 Every site needs one file and one fixture.
 
-1. Save the HTML of a real product page to
-   `packages/extension/fixtures/<site>/<product>.html`. Strip anything
-   personal from it first (your name, account, session ids in URLs).
-2. Write `packages/extension/src/extractors/<site>.ts` implementing
-   `extract(document, url)`. Return `null` when the page is not a product
-   page.
-3. Add a test that loads the fixture and asserts the price, currency and
-   product key.
-4. Open a pull request. CI runs the fixtures.
+1. Save the page as a fixture:
+   `npm run add-fixture -- <product-url> <site> <name>`. This fetches the page
+   with no cookies, strips every script that is not JSON-LD, and writes
+   `fixtures/<site>/<name>.html` plus `<name>.expected.json` under
+   `packages/extension/`. If the site blocks anonymous fetches, save the page
+   from your browser, strip scripts yourself, and check it for anything
+   personal before committing.
+2. If the generic JSON-LD extractor already found the right price, check the
+   expected values by eye and you are done. Open the pull request.
+3. Otherwise write `packages/extension/src/extractors/<site>.ts` implementing
+   the `Extractor` interface in `src/types.ts`, register it in
+   `src/extractors/index.ts`, and fill in `expected.json`. Return `null` when
+   the page is not a product page.
+4. `npm test` runs every fixture. CI runs the same on your pull request.
 
 Use the "Add support for a site" issue template if you want to claim a site
 before you start.
@@ -33,8 +38,15 @@ before you start.
 
 ## Development
 
-Tooling will be TypeScript and Node. Exact setup lands in issue #1. Until
-then, open an issue before writing code so nobody duplicates work.
+```bash
+npm install
+npm run typecheck
+npm test
+npm run demo -- <url-or-fixture.html>
+```
+
+TypeScript, Vitest, jsdom. Node 20 or newer. Open an issue before starting
+anything bigger than an extractor so nobody duplicates work.
 
 ## Licence
 
