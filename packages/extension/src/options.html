@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Natural Price options</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 16px; min-width: 360px; color: #111; }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  input { width: 100%; box-sizing: border-box; padding: 6px 8px; font: inherit; }
+  button { margin-top: 10px; padding: 6px 12px; font: inherit; }
+  p { color: #555; font-size: 12px; }
+  #status { color: #2e7d32; }
+</style>
+<label for="serviceUrl">Fetch service URL</label>
+<input id="serviceUrl" type="url" placeholder="http://localhost:8787">
+<p>The server that loads pages in a clean session. Run your own from the repository, or use the default.</p>
+<button id="save">Save</button>
+<span id="status"></span>
+<script src="options.js" type="module"></script>
