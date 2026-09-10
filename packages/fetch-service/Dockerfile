@@ -12,4 +12,5 @@ COPY packages/fetch-service packages/fetch-service
 COPY docs/payload-schema.json docs/
 ENV PORT=8787
 EXPOSE 8787
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD curl -fsS http://localhost:8787/health || exit 1
 CMD ["tsx", "packages/fetch-service/src/index.ts"]
