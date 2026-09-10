@@ -31,6 +31,12 @@ export interface Extractor {
   id: string;
   /** Whether this extractor wants to run for the given page. */
   matches(url: URL): boolean;
+  /**
+   * The URL that identifies the offer with tracking removed. Default is the
+   * page URL without query string or fragment. Sites where the query defines
+   * the offer (a hotel stay's dates and guests) keep those parameters only.
+   */
+  normalizeUrl?(url: URL): string;
   /** Return null when the page is not a product page or no price was found. */
   extract(document: Document, url: URL, now?: Date): Observation | null;
 }

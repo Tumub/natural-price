@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import type { Observation } from '@natural-price/extension';
-import { stripUrl } from '@natural-price/extension';
+import { normalizeUrl } from '@natural-price/extension';
 import { RateLimiter, json, pathOf, readJson, validateCheckBody } from '@natural-price/shared';
 import { CleanFetcher } from './browser';
 import { Breaker } from './breaker';
@@ -69,7 +69,7 @@ export function createApp(opts: ServerOptions) {
 
     if (path === '/fetch') {
       if (typeof body.url !== 'string' || !/^https?:\/\//.test(body.url)) return json(res, 400, { error: 'url required' });
-      const url = stripUrl(body.url);
+      const url = normalizeUrl(body.url);
       if (!hostAllowed(url, opts.allowedHosts)) return json(res, 403, { error: 'host not allowed' });
       if (!limiter.allow('fetch:' + hash(String(body.installId ?? 'anon')))) return json(res, 429, { error: 'rate limited' });
       return json(res, 200, await guardedFetch(url));
@@ -79,14 +79,14 @@ export function createApp(opts: ServerOptions) {
       const v = validateCheckBody(body);
       if (!v.ok) return json(res, 400, { error: 'payload does not match docs/payload-schema.json', details: v.errors });
       const yours = body.observation as Observation;
-      const url = stripUrl(yours.url);
+      const url = normalizeUrl(yours.url);
       if (!hostAllowed(url, opts.allowedHosts)) return json(res, 403, { error: 'host not allowed' });
       if (!limiter.allow('check:' + hash(body.installId))) return json(res, 429, { error: 'rate limited' });
       const started = Date.now();
       // Clean fetch and crowd lookup run side by side; the crowd never delays the badge beyond its own timeout.
       // A clean session the extension ran on the user's own device, if the user chose that.
       const client: CleanResult[] = body.clientClean
-        ? [{ observation: { ...(body.clientClean as Observation), url: stripUrl((body.clientClean as Observation).url) }, status: 'ok', exitLocation: 'private-tab' }]
+        ? [{ observation: { ...(body.clientClean as Observation), url: normalizeUrl((body.clientClean as Observation).url) }, status: 'ok', exitLocation: 'private-tab' }]
         : [];
       const [serverCleans, crowd] = await Promise.all([
         body.skipServer === true ? Promise.resolve([] as CleanResult[]) : guardedFetch(url),

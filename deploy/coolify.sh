@@ -8,7 +8,7 @@
 #   NP_ENVIRONMENT     environment name inside the project (default: production)
 #   NP_REPO            git repository (default: https://github.com/Tumub/natural-price)
 #   NP_BRANCH          branch (default: main)
-#   NP_ALLOWED_HOSTS   default: ikea.com,mediamarkt.ch,nike.com
+#   NP_ALLOWED_HOSTS   default: ikea.com,mediamarkt.ch,nike.com,booking.com
 #   NP_EXITS           default: direct  (name it after the server's country, e.g. de)
 #   NP_CROWD_SECRET    default: generated once and kept in Coolify
 #   NP_SERVER_UUID     Coolify server to deploy on (default: the first server the token can see)
@@ -29,7 +29,7 @@ NP_REPO=${NP_REPO:-https://github.com/Tumub/natural-price}
 # Coolify stores public GitHub repositories as owner/repo and prefixes the host itself.
 NP_REPO_SHORT=${NP_REPO#https://github.com/}; NP_REPO_SHORT=${NP_REPO_SHORT%.git}
 NP_BRANCH=${NP_BRANCH:-main}
-NP_ALLOWED_HOSTS=${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com}
+NP_ALLOWED_HOSTS=${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com,booking.com}
 NP_EXITS=${NP_EXITS:-direct}
 NP_FETCH_MEMORY=${NP_FETCH_MEMORY:-1536M}
 NP_CROWD_MEMORY=${NP_CROWD_MEMORY:-256M}
