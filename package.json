@@ -1,0 +1,21 @@
+{
+  "name": "natural-price",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/extension/tsconfig.json --noEmit",
+    "demo": "tsx packages/extension/src/cli.ts",
+    "add-fixture": "tsx packages/extension/src/tools/add-fixture.ts"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.10.0",
+    "jsdom": "^25.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": { "node": ">=20" }
+}

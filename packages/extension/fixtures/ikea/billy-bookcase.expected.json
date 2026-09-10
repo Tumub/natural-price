@@ -1,0 +1,12 @@
+{
+  "url": "https://www.ikea.com/ch/en/p/billy-bookcase-white-00263850/",
+  "fetchedAt": "2026-09-10",
+  "expect": {
+    "productKey": "002.638.50",
+    "productKeyType": "sku",
+    "price": 59.95,
+    "currency": "CHF",
+    "country": "CH",
+    "name": "BILLY Bookcase - white 80x28x202 cm"
+  }
+}
