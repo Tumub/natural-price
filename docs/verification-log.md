@@ -12,7 +12,7 @@ only with the same observation: comparable, basis clean, exit private-tab.
 Hotel Spalentor Basel, 28 Sep to 2 Oct, 2 adults: CHF 841 for the
 highlighted room, table range CHF 784 to 993.
 
-## 2026-09-10, first production checks at np.orcavera.com
+## 2026-09-10, first checks through a deployed service
 
 Exit `de` from the Hetzner Falkenstein address, one browser context.
 
