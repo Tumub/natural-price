@@ -11,3 +11,4 @@ natural-price-extension-*.zip
 packages/extension/dist-firefox/
 *.sqlite
 *.sqlite-*
+deploy/.env

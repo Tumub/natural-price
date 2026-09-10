@@ -4,6 +4,7 @@ COPY package.json package-lock.json ./
 COPY packages/extension/package.json packages/extension/
 COPY packages/shared/package.json packages/shared/
 COPY packages/crowd-api/package.json packages/crowd-api/
+COPY packages/fetch-service/package.json packages/fetch-service/
 RUN npm ci --omit=dev --ignore-scripts && npm i -g tsx
 COPY packages/extension packages/extension
 COPY packages/shared packages/shared
