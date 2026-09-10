@@ -40,7 +40,7 @@ describe.skipIf(skip)('extension end to end', () => {
     app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], fetchesPerCheck: 1, crowd: new CrowdClient(crowdApi) });
     await new Promise<void>((r) => app.listen(0, '127.0.0.1', r));
     api = `http://127.0.0.1:${(app.address() as AddressInfo).port}`;
-    execFileSync('node', [join(ext, 'build.mjs')], { env: { ...process.env, NP_SERVICE_URL: api, NP_EXTRA_MATCHES: 'http://127.0.0.1/*', NP_EXTRA_SERVER_SITES: '127.0.0.1' }, stdio: 'inherit' });
+    execFileSync('node', [join(ext, 'build.mjs')], { env: { ...process.env, NP_SERVICE_URL: api, NP_EXTRA_MATCHES: 'http://127.0.0.1/*', NP_EXTRA_SERVER_SITES: '127.0.0.1', NP_SERVER_ENABLED: 'true' }, stdio: 'inherit' });
     const dist = join(ext, 'dist');
     context = await chromium.launchPersistentContext('', {
       channel: 'chromium',

@@ -2,7 +2,7 @@ import { compare, type CleanResult } from './compare';
 import { getInstallId } from './install-id';
 import type { CheckRequest, CheckResponse, OpenPrivateRequest, OpenPrivateResponse } from './messages';
 import { isProbeTab, probe, resolveProbe } from './probe';
-import { getSettings, serverAllowed } from './settings';
+import { getSettings, SERVER_ENABLED, serverAllowed } from './settings';
 
 /**
  * Answers the content script's check.
@@ -19,8 +19,8 @@ import { getSettings, serverAllowed } from './settings';
 async function check(req: CheckRequest): Promise<CheckResponse> {
   const settings = await getSettings();
   const notes: string[] = [];
-  const useServer = settings.cleanMode !== 'local' && serverAllowed(req.observation.url);
-  if (settings.cleanMode !== 'local' && !useServer) {
+  const useServer = SERVER_ENABLED && settings.cleanMode !== 'local' && serverAllowed(req.observation.url);
+  if (SERVER_ENABLED && settings.cleanMode !== 'local' && !useServer) {
     notes.push('this site is not one the server is allowed to contact, so the comparison stayed on your device');
   }
 

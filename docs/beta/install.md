@@ -15,11 +15,8 @@ Five minutes. Chrome, Edge, Brave or any Chromium browser. No account.
    extension open a private tab on your device, which is how it compares
    prices. Firefox needs nothing extra.
 
-Out of the box the extension compares on your device and sends nothing
-anywhere, on any website. If you are willing to help the shared comparison
-too, open the options (right-click the icon, Options) and choose **On this
-device and on the server**. That contacts the server only for the four
-companies listed on that page.
+This build has no server. Every comparison happens on your machine and
+nothing is sent anywhere, on any website. The options page says so.
 
 The private tab opens minimised and closes itself.
 
@@ -38,13 +35,10 @@ check the service URL matches the one in the release notes.
 
 ## What leaves your browser
 
-In the default setting, nothing. The comparison happens on your device.
-
-If you switch a server setting on, then for the four listed companies only:
-the page address without tracking parameters, the price, the currency, the
-destination country the page shows, the time, and a hashed random install
-id. Nothing about you, and the server rejects anything else. The full list
-is [PRIVACY.md](../../PRIVACY.md).
+Nothing. There is no server in this build, and an automated test proves it:
+the extension is pointed at a listener that counts requests, told to use a
+server, and makes none. See [PRIVACY.md](../../PRIVACY.md) and
+[docs/anonymity.md](../anonymity.md).
 
 ## Uninstall
 

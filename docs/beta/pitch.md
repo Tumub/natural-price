@@ -2,13 +2,14 @@
 
 ## The paragraph
 
-> Shops, airlines and hotel sites show different people different prices,
-> and you cannot see it. Natural Price is a small open-source Chrome
-> extension that reads the price you were shown and compares it with what a
-> clean, anonymous session sees at the same moment. It works on IKEA,
-> MediaMarkt and Nike right now, sends nothing that identifies you, and the
-> whole thing is on GitHub. I am looking for fifty people to run it for a
-> month and tell me what it finds. Five minutes to install, no account.
+> Shops, airlines and hotel sites show different people different prices.
+> It is called surveillance pricing, and you cannot see it happening.
+> Natural Price is a small open-source Chrome extension that reads the price
+> you were shown and compares it with the same page opened in a private tab
+> on your own machine. It works on any shop that publishes a price, it sends
+> nothing anywhere because there is no server, and the whole thing is on
+> GitHub. I am looking for fifty people to run it for a month and tell me
+> what it finds. Five minutes to install, no account.
 
 ## Channels, in order
 
@@ -24,7 +25,10 @@
 
 ## Show HN draft
 
-Title: Show HN: An extension that shows you the price a stranger gets
+Title: Show HN: See the price a stranger gets, without sending anything anywhere
+
+Alternative title, if surveillance pricing is in the news that week:
+Show HN: A surveillance-pricing detector that works entirely on your machine
 
 Body:
 

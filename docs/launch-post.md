@@ -8,8 +8,8 @@ sentence.
 
 **Natural Price: an open-source extension that shows you the price a stranger gets**
 
-Personalised pricing is legal in the EU as long as the shop tells you it
-happened. Almost none of them do. For the last [N] weeks, [N] people ran a
+Surveillance pricing, also called personalised pricing, is legal in the EU
+as long as the shop tells you it happened. Almost none of them do. For the last [N] weeks, [N] people ran a
 small extension I built that reads the price on a product page, has a
 server load the same page in a fresh anonymous session, and shows both.
 

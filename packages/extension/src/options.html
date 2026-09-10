@@ -18,7 +18,8 @@
 
 <h2>Where the clean session runs</h2>
 <p>The clean session is this same page opened with no cookies, no login and no history. The price it gets is what you are compared with.</p>
-<fieldset>
+<p id="noServer" hidden><strong>This build has no server.</strong> Every comparison happens on this device and nothing is sent anywhere, on any website. The settings below exist only in builds made with the optional server switched on.</p>
+<fieldset id="modes">
   <label class="opt"><input type="radio" name="cleanMode" value="local"> On this device only
     <span>A private tab here, compared here. Nothing is sent to any server, on any website. Recommended.</span></label>
   <label class="opt"><input type="radio" name="cleanMode" value="both"> On this device and on the server
@@ -28,18 +29,21 @@
 </fieldset>
 <p id="incognito"></p>
 
+<div id="serverOnly">
 <h2>Companies the server may be contacted about</h2>
 <p>In the two server modes, the extension contacts the server only for these companies. Every other website is compared on this device or not at all. This list is fixed in the code and can be checked in the repository.</p>
 <ul id="sites"></ul>
 
 <h2>Websites</h2>
 <label class="opt"><input type="checkbox" id="allSites"> Read prices on every website
-  <span>Off means only the companies above, which are the ones with a tested price reader. On means the extension also tries any other shop that publishes a price in a standard format.</span></label>
+  <span>Off means only the sites with a tested price reader, listed below. On means the extension also tries any other shop that publishes a price in a standard format.</span></label>
+<ul id="tested"></ul>
 
 <hr>
 <h2>Server address</h2>
 <input id="serviceUrl" type="url" placeholder="https://np.orcavera.com">
 <p>Only used in the two server modes. Run your own from the repository if you prefer.</p>
+</div>
 
 <button id="save">Save</button><span id="status"></span>
 <script src="options.js" type="module"></script>
