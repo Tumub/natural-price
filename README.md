@@ -11,11 +11,11 @@ same hour.
 
 [![ci](https://github.com/Tumub/natural-price/actions/workflows/ci.yml/badge.svg)](https://github.com/Tumub/natural-price/actions/workflows/ci.yml)
 
-Status: **phase 3, private beta**. The extension, the clean-room fetch
-service and the comparison rules work end to end on three launch sites
-(IKEA, MediaMarkt, Nike, Swiss storefronts). Testers load it unpacked from
-a release zip; see [docs/beta/install.md](docs/beta/install.md). Read
-[PLAN.md](PLAN.md) for the roadmap and the open issues for what to pick up.
+Status: **phase 4 built, awaiting deployment and testers**. Extension,
+clean-room fetch service, comparison rules and the crowd baseline work end
+to end on three launch sites (IKEA, MediaMarkt, Nike, Swiss storefronts),
+for Chrome and Firefox. Not yet in any store. Read [PLAN.md](PLAN.md) for
+the roadmap and the open issues for what to pick up.
 
 <p>
   <img src="docs/assets/badge-same.png" width="340" alt="Badge: you were shown CHF 59.95, a clean session was shown the same">
@@ -35,10 +35,14 @@ npx playwright install chromium
 npm test
 ```
 
-Run the fetch service in one terminal:
+Run the crowd API and the fetch service in two terminals:
 
 ```bash
-NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com npm run service
+NP_CROWD_SECRET=$(openssl rand -hex 32) npm run crowd
+```
+
+```bash
+NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com NP_CROWD_URL=http://localhost:8788 npm run service
 ```
 
 Build the extension and load it:
@@ -50,6 +54,9 @@ npm run build:extension
 Open `chrome://extensions`, enable Developer mode, choose "Load unpacked"
 and pick `packages/extension/dist`. Then open a product page on one of the
 three sites. The badge appears bottom right within a few seconds.
+
+Firefox: `npm run build:extension:firefox`, then `about:debugging`, "Load
+Temporary Add-on", pick `packages/extension/dist-firefox/manifest.json`.
 
 Or just look at what the extractor sees on one page:
 
@@ -107,6 +114,11 @@ currency, for which destination. Everything else compares two of these.
                                     └──────────────────────────┘
 ```
 
+When enough other users have seen the same product, the badge adds what
+they saw: "5 other people saw a median of CHF 840.90 this hour." A clean
+fetch that the crowd confirms is high confidence. When a site blocks every
+clean session, the crowd median is the fallback.
+
 Two baselines, because each fails differently:
 
 | Baseline | Strength | Weakness |
@@ -129,11 +141,13 @@ Two baselines, because each fails differently:
 ## Repository layout
 
 ```
-packages/extension/      browser extension (Manifest V3), extractors, fixtures
+packages/extension/      browser extension (Manifest V3, Chrome and Firefox), extractors, fixtures
 packages/fetch-service/  clean-room fetch API (Playwright), comparison rules, stats
-packages/crowd-api/      anonymous observation store and aggregation (phase 4)
-docs/                    launch sites, comparison rules, payload schema, blocking log
+packages/crowd-api/      anonymous observation store, aggregation, open-data export
+packages/shared/         rate limiter, payload validation, HTTP helpers
+docs/                    launch sites, comparison rules, payload schema, blocking log, open data
 docs/beta/               tester install, feedback, recruiting, weekly summary
+docs/store/              Chrome Web Store and Firefox AMO listing copy
 test-support/            local fixture server used by the end-to-end tests
 ```
 

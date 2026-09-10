@@ -24,11 +24,26 @@ direction is reported as `same`.
 |---|---|
 | low | One clean fetch |
 | medium | Two clean fetches from different exit locations that agree within 0.5 percent |
-| high | Crowd baseline agrees (phase 4) |
+| high | A clean fetch and the crowd median agree within 0.5 percent |
 
 When two clean fetches disagree by more than 0.5 percent, the comparison
 stays at low confidence and says the site may be A/B testing or pricing by
 location. That is not a personalisation finding.
+
+## The crowd
+
+The crowd baseline is the median price other installs reported for the
+same product key, currency and destination country. It is used only when
+**at least five other installs** reported it, this hour first, today
+otherwise. The install asking is never counted as its own crowd.
+
+- Clean fetch usable and crowd agrees with it: confidence **high**.
+- Clean fetch usable and crowd disagrees: confidence unchanged, and the
+  reasons say the site may price by session or time.
+- Clean fetch blocked or unreadable and crowd available: the comparison is
+  made against the crowd median at **medium** confidence, with `basis:
+  "crowd"`. This is the path that survives when a site blocks every clean
+  session.
 
 **Never claimed:** discrimination, intent, or the reason for a difference.
 The badge says what was observed.

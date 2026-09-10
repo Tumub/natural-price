@@ -32,6 +32,7 @@ fetch statuses and verdicts. No ids, no URLs, no prices.
 | `NP_PER_MINUTE`, `NP_PER_DAY` | 10, 100 | Rate limit per hashed install id |
 | `NP_BREAK_AFTER`, `NP_BREAK_MINUTES` | 3, 15 | Pause a host after N blocked fetches in 10 minutes, for M minutes |
 | `NP_STATS_FILE` | unset | Persist the counters to this JSON file every minute |
+| `NP_CROWD_URL` | unset | Crowd API origin. Each validated observation is forwarded there and the answer merged into the comparison. |
 
 Exit labels double as country profiles: an exit called `ch` browses with a
 Swiss locale, timezone and Accept-Language. `direct` is neutral. Name the

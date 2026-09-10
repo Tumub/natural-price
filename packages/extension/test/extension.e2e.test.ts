@@ -5,7 +5,10 @@ import type { Server } from 'node:http';
 import { AddressInfo } from 'node:net';
 import { chromium, type BrowserContext } from 'playwright';
 import { CleanFetcher } from '../../fetch-service/src/browser';
+import { CrowdClient } from '../../fetch-service/src/crowd';
 import { createApp } from '../../fetch-service/src/server';
+import { createCrowdApp } from '../../crowd-api/src/server';
+import { CrowdStore } from '../../crowd-api/src/store';
 import { startFixtureServer } from '../../../test-support/fixture-server';
 
 /**
@@ -21,13 +24,18 @@ describe.skipIf(skip)('extension end to end', () => {
   let fixtures: Awaited<ReturnType<typeof startFixtureServer>>;
   let fetcher: CleanFetcher;
   let app: Server;
+  let crowdApp: Server;
+  let crowdApi: string;
   let context: BrowserContext;
 
   beforeAll(async () => {
     fixtures = await startFixtureServer();
     fetcher = new CleanFetcher([{ label: 'direct' }]);
     await fetcher.start();
-    app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], fetchesPerCheck: 1 });
+    crowdApp = createCrowdApp({ store: new CrowdStore(':memory:', 'test') });
+    await new Promise<void>((r) => crowdApp.listen(0, '127.0.0.1', r));
+    crowdApi = `http://127.0.0.1:${(crowdApp.address() as AddressInfo).port}`;
+    app = createApp({ fetcher, allowedHosts: ['127.0.0.1'], fetchesPerCheck: 1, crowd: new CrowdClient(crowdApi) });
     await new Promise<void>((r) => app.listen(0, '127.0.0.1', r));
     const api = `http://127.0.0.1:${(app.address() as AddressInfo).port}`;
     execFileSync('node', [join(ext, 'build.mjs')], { env: { ...process.env, NP_SERVICE_URL: api, NP_EXTRA_MATCHES: 'http://127.0.0.1/*' }, stdio: 'inherit' });
@@ -42,6 +50,7 @@ describe.skipIf(skip)('extension end to end', () => {
   afterAll(async () => {
     await context?.close();
     app?.close();
+    crowdApp?.close();
     await fetcher?.stop();
     fixtures?.server.close();
   });
@@ -68,6 +77,22 @@ describe.skipIf(skip)('extension end to end', () => {
     await button.click();
     const status = page.locator('[data-np-status]');
     await expect.poll(() => status.textContent(), { timeout: 10_000 }).toMatch(/Opened|Link copied|paste this link/);
+    await page.close();
+  }, 60_000);
+
+  it('shows the crowd line once other people have seen the product', async () => {
+    const url = fixtures.url('mediamarkt', 'samsung-soundbar');
+    const observation = { productKey: '8806095447711', productKeyType: 'gtin', price: 840.9, currency: 'CHF', country: 'CH', url, observedAt: new Date().toISOString(), source: 'jsonld', extractor: 'jsonld' };
+    for (let i = 1; i <= 5; i++) {
+      const r = await fetch(crowdApi + '/observe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ observation, installId: i.toString(16).padStart(64, '0') }) });
+      expect(r.status).toBe(200);
+    }
+    const page = await context.newPage();
+    await page.goto(url);
+    const verdict = page.locator('[data-np-verdict]');
+    await expect.poll(() => verdict.getAttribute('data-np-verdict'), { timeout: 30_000 }).toBe('same');
+    expect(await page.locator('[data-np-crowd]').textContent()).toMatch(/5 other people saw a median of .*840\.90 this hour/);
+    expect(await page.locator('.c').textContent()).toBe('Confidence: high.');
     await page.close();
   }, 60_000);
 

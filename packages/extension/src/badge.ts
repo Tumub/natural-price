@@ -23,6 +23,7 @@ const CSS = `
 .b { all: unset; display: inline-block; margin-top: 8px; padding: 6px 10px; border-radius: 6px; background: #111; color: #fff; font-size: 12px; cursor: pointer; }
 .b:hover { background: #333; }
 .s { margin-top: 6px; font-size: 12px; color: #444; }
+.k { margin-top: 6px; font-size: 12px; color: #333; }
 details { margin-top: 6px; font-size: 12px; color: #666; }
 summary { cursor: pointer; }
 ul { margin: 4px 0 0; padding-left: 16px; }
@@ -59,7 +60,7 @@ export function createBadge(yours: Observation, handlers: BadgeHandlers = {}): B
   root.append(style, box);
   document.documentElement.append(host);
 
-  function render(verdict: string, main: string, extra: { confidence?: string; action?: string; button?: boolean; reasons?: string[] } = {}) {
+  function render(verdict: string, main: string, extra: { confidence?: string; crowd?: string; action?: string; button?: boolean; reasons?: string[] } = {}) {
     box.dataset.verdict = verdict;
     box.innerHTML = '';
     const h = document.createElement('div');
@@ -78,6 +79,13 @@ export function createBadge(yours: Observation, handlers: BadgeHandlers = {}): B
     m.setAttribute('data-np-verdict', verdict);
     m.textContent = main;
     box.append(h, m);
+    if (extra.crowd) {
+      const k = document.createElement('div');
+      k.className = 'k';
+      k.setAttribute('data-np-crowd', '');
+      k.textContent = extra.crowd;
+      box.append(k);
+    }
     if (extra.confidence) {
       const c = document.createElement('div');
       c.className = 'c';
@@ -125,20 +133,26 @@ export function createBadge(yours: Observation, handlers: BadgeHandlers = {}): B
     checking: () => render('checking', `You were shown ${y}. Checking what a clean session sees…`),
     result: (r) => {
       if (r.error) return render('error', `You were shown ${y}. Could not check: ${r.error}.`);
-      if (!r.comparable || !r.clean || r.difference === undefined) {
+      if (!r.comparable || r.difference === undefined) {
         return render('unknown', `You were shown ${y}. Could not compare.`, { reasons: r.reasons });
       }
-      const c = fmt(r.clean.price, r.clean.currency);
       const pct = Math.abs(Math.round(r.difference * 1000) / 10);
-      if (r.verdict === 'same') return render('same', `You were shown ${y}. A clean session was shown the same.`, { confidence: r.confidence, reasons: r.reasons });
+      const when = r.crowd?.window === 'hour' ? 'this hour' : 'today';
+      const crowdLine = r.crowd && r.basis === 'clean' ? `${r.crowd.others} other people saw a median of ${fmt(r.crowd.median, yours.currency)} ${when}.` : undefined;
+      // Who is the reference: a clean session, or the crowd when the clean fetch failed.
+      const who = r.basis === 'crowd' && r.crowd ? `${r.crowd.others} other people saw a median of` : 'A clean session was shown';
+      const ref = r.basis === 'crowd' && r.crowd ? fmt(r.crowd.median, yours.currency) : r.clean ? fmt(r.clean.price, r.clean.currency) : '';
+      const tail = r.basis === 'crowd' ? ` ${when}` : '';
+      if (r.verdict === 'same') return render('same', `You were shown ${y}. ${who} the same${tail}.`, { confidence: r.confidence, crowd: crowdLine, reasons: r.reasons });
       if (r.verdict === 'higher')
-        return render('higher', `You were shown ${y}. A clean session was shown ${c}, ${pct}% less.`, {
+        return render('higher', `You were shown ${y}. ${who} ${ref}${tail}, ${pct}% less.`, {
           confidence: r.confidence,
+          crowd: crowdLine,
           action: 'Compare in a private window before you buy.',
           button: true,
           reasons: r.reasons,
         });
-      return render('lower', `You were shown ${y}. A clean session was shown ${c}, ${pct}% more.`, { confidence: r.confidence, reasons: r.reasons });
+      return render('lower', `You were shown ${y}. ${who} ${ref}${tail}, ${pct}% more.`, { confidence: r.confidence, crowd: crowdLine, reasons: r.reasons });
     },
     error: (msg) => render('error', `You were shown ${y}. Could not check: ${msg}.`),
     remove: () => host.remove(),
