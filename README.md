@@ -11,16 +11,47 @@ same hour.
 
 [![ci](https://github.com/Tumub/natural-price/actions/workflows/ci.yml/badge.svg)](https://github.com/Tumub/natural-price/actions/workflows/ci.yml)
 
-Status: **phase 1**. The price reader works against real pages in CI. There
-is no installable extension yet. Read [PLAN.md](PLAN.md) for the roadmap and
-the open issues for what to pick up.
+Status: **phase 2**. The extension, the clean-room fetch service and the
+comparison rules work end to end on three launch sites (IKEA, MediaMarkt,
+Nike, Swiss storefronts). Not yet in any store; you load it unpacked. Read
+[PLAN.md](PLAN.md) for the roadmap and the open issues for what to pick up.
+
+<p>
+  <img src="docs/assets/badge-same.png" width="340" alt="Badge: you were shown CHF 59.95, a clean session was shown the same">
+  <img src="docs/assets/badge-higher.png" width="340" alt="Badge: you were shown CHF 64.95, a clean session was shown CHF 59.95, 7.7% less">
+</p>
+
+Left: a real end-to-end result. Right: what the badge looks like when a
+difference is found, rendered from a synthetic answer for illustration.
 
 ## Try it
 
 ```bash
 git clone https://github.com/Tumub/natural-price && cd natural-price
 npm install
+npx playwright install chromium
 npm test
+```
+
+Run the fetch service in one terminal:
+
+```bash
+NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com npm run service
+```
+
+Build the extension and load it:
+
+```bash
+npm run build:extension
+```
+
+Open `chrome://extensions`, enable Developer mode, choose "Load unpacked"
+and pick `packages/extension/dist`. Then open a product page on one of the
+three sites. The badge appears bottom right within a few seconds.
+
+Or just look at what the extractor sees on one page:
+
+```bash
 npm run demo -- https://www.ikea.com/ch/en/p/billy-bookcase-white-00263850/
 ```
 
@@ -96,10 +127,11 @@ Two baselines, because each fails differently:
 ## Repository layout
 
 ```
-packages/extension/      browser extension (Manifest V3, Chrome + Firefox)
-packages/fetch-service/  clean-room fetch API (Playwright)
+packages/extension/      browser extension (Manifest V3), extractors, fixtures
+packages/fetch-service/  clean-room fetch API (Playwright) and comparison rules
 packages/crowd-api/      anonymous observation store and aggregation (phase 4)
-docs/                    design notes and decisions
+docs/                    launch sites, comparison rules, payload schema, verification log
+test-support/            local fixture server used by the end-to-end tests
 ```
 
 ## Contributing

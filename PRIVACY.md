@@ -5,14 +5,21 @@ here, that is a bug and should be reported as one.
 
 ## What the extension sends to the fetch service
 
+The machine-readable version is [docs/payload-schema.json](docs/payload-schema.json).
+Anything not in that schema is rejected by the service.
+
 | Field | Example | Why |
 |---|---|---|
-| `url` | `https://example.com/p/12345` | The page to fetch. Query strings and fragments are removed before sending. |
+| `url` | `https://example.com/p/12345` | The page to fetch. Canonical URL; query string and fragment removed before sending. |
+| `productKey`, `productKeyType` | `4006381333931`, `gtin` | Identifies the product. GTIN, SKU, MPN or the URL, all read from the page. |
+| `name` | `BILLY Bookcase` | Product name from the page, for the badge and later for the crowd view. |
 | `price` | `129.00` | What you saw. |
 | `currency` | `EUR` | To compare like with like. |
 | `country` | `CH` | Destination country as shown on the page, not your IP. Needed because prices legitimately differ by destination. |
-| `observed_at` | `2026-10-03T14:05:00Z` | Time window matching. |
-| `install_id` | random UUID hashed | Rate limiting only. Not linked to any account. Regenerated if you reinstall. |
+| `observedAt` | `2026-10-03T14:05:00Z` | Time window matching. |
+| `source`, `extractor` | `jsonld`, `jsonld` | Which reader produced the price, so broken readers can be found. |
+| `variantCount`, `priceRange` | `29`, `{min, max}` | Only on pages listing several variants. Read from the page. |
+| `installId` | SHA-256 of a random UUID | Rate limiting only. Not linked to any account. Regenerated if you reinstall. |
 
 ## What the extension will send to the crowd API (phase 4)
 
@@ -30,8 +37,9 @@ salt so observations from the same install cannot be joined across days.
 
 ## What the server stores
 
-- Fetch service: nothing beyond a rate-limit counter per hashed install id,
-  expiring after 24 hours.
+- Fetch service: a rate-limit counter per hashed install id, expiring after
+  24 hours, and one log line per check with time, hostname, duration, fetch
+  statuses and verdict. No IP, no install id, no path, no query.
 - Crowd API: the anonymised observations above, kept indefinitely, published
   in aggregate.
 
