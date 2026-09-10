@@ -9,9 +9,15 @@
   p { color: #555; font-size: 12px; }
   #status { color: #2e7d32; }
 </style>
+<label>Where the clean session runs</label>
+<p>The clean session is the same page opened with no cookies, no login and no history. The price it gets is what you are compared with.</p>
+<label style="font-weight:normal"><input type="radio" name="cleanMode" value="server"> On the server only. Sees location and device effects too; some shops block it.</label>
+<label style="font-weight:normal"><input type="radio" name="cleanMode" value="private"> In a private tab on this device only. Nothing is fetched by the server; your own address is used, so shops do not block it, but location and device effects stay hidden.</label>
+<label style="font-weight:normal"><input type="radio" name="cleanMode" value="both"> Both. The two corroborate each other for medium confidence.</label>
+<p id="incognito"></p>
 <label for="serviceUrl">Fetch service URL</label>
 <input id="serviceUrl" type="url" placeholder="http://localhost:8787">
-<p>The server that loads pages in a clean session. Run your own from the repository, or use the default.</p>
+<p>The server that compares prices and, in server mode, loads pages in a clean session. Run your own from the repository, or use the default.</p>
 <button id="save">Save</button>
 <span id="status"></span>
 <script src="options.js" type="module"></script>

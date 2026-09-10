@@ -35,6 +35,9 @@ manifest.content_scripts[0].matches.push(...extra);
 if (target === 'firefox') {
   // Firefox runs MV3 background scripts as an event page, not a service worker.
   manifest.background = { scripts: ['background.js'], type: 'module' };
+  // Temporary container tabs for the clean session on this device.
+  manifest.permissions.push('contextualIdentities', 'cookies');
+  delete manifest.incognito;
   manifest.browser_specific_settings = { gecko: { id: '{7e1c4a2e-9d0b-4c47-9c1f-natural-price}'.replace('natural-price', '5a1f7b2c9e3d'), strict_min_version: '128.0' } };
 }
 writeFileSync(join(dist, 'manifest.json'), JSON.stringify(manifest, null, 2));

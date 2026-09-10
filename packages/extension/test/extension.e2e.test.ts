@@ -96,6 +96,34 @@ describe.skipIf(skip)('extension end to end', () => {
     await page.close();
   }, 60_000);
 
+  it('in "both" mode without incognito access, still answers from the server and says why the private tab failed', async () => {
+    // Set the mode through the options page, the way a user would.
+    const optionsUrl = await (async () => {
+      const [sw] = context.serviceWorkers();
+      const worker = sw ?? (await context.waitForEvent('serviceworker'));
+      return worker.url().replace(/background\.js$/, 'options.html');
+    })();
+    const options = await context.newPage();
+    await options.goto(optionsUrl);
+    await options.check('input[name="cleanMode"][value="both"]');
+    await expect.poll(() => options.locator('#incognito').textContent()).toMatch(/Allow in Incognito|allowed/);
+    await options.click('#save');
+    await expect.poll(() => options.locator('#status').textContent()).toBe('Saved.');
+    await options.close();
+
+    const page = await context.newPage();
+    await page.goto(fixtures.url('ikea', 'billy-bookcase'));
+    const verdict = page.locator('[data-np-verdict]');
+    await expect.poll(() => verdict.getAttribute('data-np-verdict'), { timeout: 40_000 }).not.toBe('checking');
+    expect(await verdict.getAttribute('data-np-verdict')).toBe('same');
+    await page.locator('summary').click();
+    const details = await page.locator('details').textContent();
+    // Either the probe ran (agreement noted) or it could not (reason noted). Both are correct behaviour.
+    expect(details).toMatch(/private tab/);
+    await page.close();
+    await context.pages()[0]?.evaluate(() => undefined).catch(() => undefined);
+  }, 90_000);
+
   it('shows the badge on the Nike variant page too', async () => {
     const page = await context.newPage();
     await page.goto(fixtures.url('nike', 'cw2288-111'));

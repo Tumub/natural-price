@@ -140,7 +140,12 @@ export function createBadge(yours: Observation, handlers: BadgeHandlers = {}): B
       const when = r.crowd?.window === 'hour' ? 'this hour' : 'today';
       const crowdLine = r.crowd && r.basis === 'clean' ? `${r.crowd.others} other people saw a median of ${fmt(r.crowd.median, yours.currency)} ${when}.` : undefined;
       // Who is the reference: a clean session, or the crowd when the clean fetch failed.
-      const who = r.basis === 'crowd' && r.crowd ? `${r.crowd.others} other people saw a median of` : 'A clean session was shown';
+      const who =
+        r.basis === 'crowd' && r.crowd
+          ? `${r.crowd.others} other people saw a median of`
+          : r.clean?.exitLocation === 'private-tab'
+            ? 'A private tab on this device was shown'
+            : 'A clean session was shown';
       const ref = r.basis === 'crowd' && r.crowd ? fmt(r.crowd.median, yours.currency) : r.clean ? fmt(r.clean.price, r.clean.currency) : '';
       const tail = r.basis === 'crowd' ? ` ${when}` : '';
       if (r.verdict === 'same') return render('same', `You were shown ${y}. ${who} the same${tail}.`, { confidence: r.confidence, crowd: crowdLine, reasons: r.reasons });

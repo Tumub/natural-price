@@ -30,6 +30,18 @@ When two clean fetches disagree by more than 0.5 percent, the comparison
 stays at low confidence and says the site may be A/B testing or pricing by
 location. That is not a personalisation finding.
 
+## Where the clean session comes from
+
+A clean fetch can come from the server (exit named after its country) or
+from a **private tab on the user's own device** (exit `private-tab`), sent
+along with the observation. The two are treated alike by the rules above.
+The server sees location and device effects too; the private tab uses the
+user's own address, so shops do not block it, but it cannot see location or
+device effects. When both are present and agree, confidence is medium. The
+server fetch is the reference when both exist; the private tab is the
+reference when the user chose private-tab-only mode or the server was
+blocked.
+
 ## The crowd
 
 The crowd baseline is the median price other installs reported for the

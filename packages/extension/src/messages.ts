@@ -15,7 +15,7 @@ export interface OpenPrivateResponse {
   reason?: string;
 }
 
-/** Mirrors Comparison in packages/fetch-service/src/compare.ts. */
+/** Mirrors Comparison in packages/fetch-service/src/compare.ts, plus client-side fields. */
 export interface CheckResponse {
   comparable: boolean;
   basis: 'clean' | 'crowd' | 'none';
@@ -28,4 +28,6 @@ export interface CheckResponse {
   confidence: 'low' | 'medium' | 'high';
   cleanFetches: { status: string; exitLocation: string; price?: number }[];
   error?: string;
+  /** Set when the sender was the extension's own clean-session tab: render nothing. */
+  probe?: boolean;
 }

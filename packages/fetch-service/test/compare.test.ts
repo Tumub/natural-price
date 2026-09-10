@@ -26,6 +26,13 @@ describe('compare', () => {
     expect(r.confidence).toBe('low');
     expect(r.reasons.join()).toMatch(/disagree/);
   });
+  it('treats a private tab like any clean fetch and corroborates the server with it', () => {
+    const r = compare(obs(), [ok(100, 'de'), ok(100.1, 'private-tab')], null, now);
+    expect(r).toMatchObject({ comparable: true, confidence: 'medium', clean: { exitLocation: 'de' } });
+    expect(r.reasons.join()).toMatch(/private tab on your device and the server agree/);
+    expect(compare(obs({ price: 110 }), [ok(100, 'private-tab')], null, now)).toMatchObject({ verdict: 'higher', confidence: 'low', clean: { exitLocation: 'private-tab' } });
+    expect(compare(obs(), [], null, now).reasons[0]).toMatch(/no clean session/);
+  });
   it('refuses currency, country, product and time mismatches', () => {
     expect(compare(obs(), [ok(100, 'd', { currency: 'EUR' })], null, now).comparable).toBe(false);
     expect(compare(obs(), [ok(100, 'd', { country: 'DE' })], null, now).comparable).toBe(false);
