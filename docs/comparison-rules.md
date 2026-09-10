@@ -32,9 +32,11 @@ location. That is not a personalisation finding.
 
 ## Where the clean session comes from
 
-A clean fetch can come from the server (exit named after its country) or
-from a **private tab on the user's own device** (exit `private-tab`), sent
-along with the observation. The two are treated alike by the rules above.
+A clean fetch can come from a **private tab on the user's own device**
+(exit `private-tab`) or from the server (exit named after its country).
+The two are treated alike by the rules above, and the same code applies
+them: `packages/extension/src/compare.ts` runs in the browser when the
+comparison is local and on the server when it is not.
 The server sees location and device effects too; the private tab uses the
 user's own address, so shops do not block it, but it cannot see location or
 device effects. When both are present and agree, confidence is medium. The

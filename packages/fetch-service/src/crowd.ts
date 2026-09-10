@@ -1,19 +1,6 @@
-import type { Observation } from '@natural-price/extension';
+import type { CrowdAnswer, Observation } from '@natural-price/extension';
 
-/** Mirrors Aggregate and CrowdAnswer in packages/crowd-api/src/store.ts. */
-export interface Aggregate {
-  window: 'hour' | 'day';
-  bucket: string;
-  n: number;
-  installs: number;
-  median: number;
-  min: number;
-  max: number;
-}
-export interface CrowdAnswer {
-  hour: Aggregate | null;
-  day: Aggregate | null;
-}
+export type { Aggregate, CrowdAnswer } from '@natural-price/extension';
 
 /**
  * Server-to-server client for the crowd API. Forwards the same validated

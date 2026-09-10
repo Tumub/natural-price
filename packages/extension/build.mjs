@@ -4,6 +4,7 @@
  *   NP_TARGET          chrome (default) or firefox
  *   NP_SERVICE_URL     origin of the fetch service (default http://localhost:8787)
  *   NP_EXTRA_MATCHES   comma list of extra content-script match patterns (tests)
+ *   NP_EXTRA_SERVER_SITES  comma list of extra hosts the server may be contacted about
  */
 import { build } from 'esbuild';
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -15,6 +16,7 @@ const target = process.env.NP_TARGET === 'firefox' ? 'firefox' : 'chrome';
 const dist = join(here, target === 'firefox' ? 'dist-firefox' : 'dist');
 const serviceUrl = (process.env.NP_SERVICE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
 const extra = (process.env.NP_EXTRA_MATCHES ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const extraSites = (process.env.NP_EXTRA_SERVER_SITES ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
@@ -25,12 +27,11 @@ await build({
   format: 'esm',
   target: target === 'firefox' ? 'firefox128' : 'chrome120',
   outdir: dist,
-  define: { __SERVICE_URL__: JSON.stringify(serviceUrl) },
+  define: { __SERVICE_URL__: JSON.stringify(serviceUrl), __EXTRA_SERVER_SITES__: JSON.stringify(extraSites) },
   logLevel: 'warning',
 });
 
 const manifest = JSON.parse(readFileSync(join(here, 'manifest.template.json'), 'utf8'));
-manifest.host_permissions = [new URL(serviceUrl).origin + '/*'];
 manifest.content_scripts[0].matches.push(...extra);
 if (target === 'firefox') {
   // Firefox runs MV3 background scripts as an event page, not a service worker.

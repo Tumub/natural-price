@@ -2,6 +2,7 @@ import { extract } from './extractors/index';
 import { createBadge, type Badge } from './badge';
 import type { CheckRequest, CheckResponse, OpenPrivateRequest, OpenPrivateResponse } from './messages';
 import { normalizeUrl } from './extractors/index';
+import { getSettings, SERVER_SITES } from './settings';
 
 /**
  * Runs on product pages of the launch sites. Reads the price, asks the
@@ -17,8 +18,15 @@ let attempts = 0;
 /** Ticks of 1.5 s to keep looking for a price after a URL change: 30 s. */
 const MAX_ATTEMPTS = 20;
 
+/** Sites with a tested reader. Everything else needs "all websites" switched on. */
+function isTestedSite(url: URL): boolean {
+  return SERVER_SITES.some((s) => url.hostname === s || url.hostname.endsWith('.' + s));
+}
+
 async function run(): Promise<void> {
   const url = new URL(location.href);
+  const settings = await getSettings();
+  if (!settings.allSites && !isTestedSite(url)) return;
   const key = url.origin + url.pathname;
   if (key !== lastUrl) {
     lastUrl = key;

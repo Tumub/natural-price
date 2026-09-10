@@ -31,6 +31,7 @@ NP_CROWD_SECRET=$(openssl rand -hex 32) npm run crowd
 | `NP_CROWD_DB` | `crowd.sqlite` | SQLite file. Mount a volume in Docker. |
 | `NP_CROWD_SECRET` | random | Seeds the daily install-hash salt. Set it, or install counts reset on restart. |
 | `NP_ALLOWED_HOSTS` | any | Hostnames accepted, suffix match |
+| `NP_RETENTION_DAYS` | 90 | Raw observations older than this are deleted every six hours. Published aggregates are unaffected. |
 
 ## What is stored
 
