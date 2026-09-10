@@ -30,6 +30,7 @@ fetch statuses and verdicts. No ids, no URLs, no prices.
 | `NP_FETCHES_PER_CHECK` | 2 | Distinct exits used per check |
 | `NP_CONCURRENCY` | 2 | Parallel browser contexts |
 | `NP_PER_MINUTE`, `NP_PER_DAY` | 10, 100 | Rate limit per hashed install id |
+| `NP_IP_PER_MINUTE`, `NP_IP_PER_DAY` | 20, 300 | Rate limit per client address (hashed, taken from X-Forwarded-For behind the proxy). Install ids are client-chosen, so this is the limit that holds. |
 | `NP_BREAK_AFTER`, `NP_BREAK_MINUTES` | 3, 15 | Pause a host after N blocked fetches in 10 minutes, for M minutes |
 | `NP_STATS_FILE` | unset | Persist the counters to this JSON file every minute |
 | `NP_CROWD_URL` | unset | Crowd API origin. Each validated observation is forwarded there and the answer merged into the comparison. |
@@ -51,6 +52,15 @@ docker run -p 8787:8787 -e NP_ALLOWED_HOSTS=ikea.com,mediamarkt.ch,nike.com,book
 
 A 2 GB VPS runs it comfortably at phase 2 load. Put it behind a reverse proxy
 with TLS; the extension's manifest must list the public origin.
+
+## Abuse surface
+
+Anyone can call `/check` for any allowed host, which makes this server load
+a page from its own address. The install-id limit is advisory since the
+client chooses the id; the per-address limit is the real cap. Keep the
+allow-list short, keep `NP_CONCURRENCY` low, and run this on a server whose
+address you can afford to have blocked by a shop, which means not the one
+that runs anything else you care about.
 
 ## What is logged
 
