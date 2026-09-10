@@ -23,7 +23,7 @@ table. Newest first.
 
 ## 2026-09-10, production: Hetzner Falkenstein datacenter address, exit `de`
 
-First checks through the deployed service at `the deployed service`.
+First checks through a deployed fetch service.
 
 | Site | Result | Note |
 |---|---|---|

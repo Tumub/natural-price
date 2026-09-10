@@ -1,11 +1,14 @@
 # Deploy
 
-**Production, since 2026-09-10:** `https://your-server.example` on the Coolify
-host, project `natural-price`, apps `natural-price-fetch` (1 GB cap, one
-browser context, exit `de`) and `natural-price-crowd` (128 MB cap, volume
-`/data`). The crowd API has no public route; the fetch service reaches it
-as `http://natural-price-crowd:8788`. Redeploy with `deploy/coolify.sh`
-using the same variables. Release zips are built against this origin.
+**There is no hosted service.** Released builds have the server compiled
+out, so nothing here is needed to use the extension. These instructions are
+for self-hosters, and for reviving the shared server later if the crowd
+baseline becomes worth running.
+
+Sizing that worked in practice: `natural-price-fetch` with a 1 GB cap and
+one browser context, `natural-price-crowd` with a 128 MB cap and a volume
+at `/data`. The crowd API needs no public route; the fetch service reaches
+it over the internal network.
 
 One VPS with 2 GB of memory, Docker, and a domain pointing at it. Both
 services, plus Caddy for automatic TLS, in one `docker compose up`.
