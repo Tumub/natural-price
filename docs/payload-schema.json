@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Tumub/natural-price/docs/payload-schema.json",
+  "title": "Natural Price outbound payload: POST /check",
+  "description": "Everything the extension sends to the fetch service. If the code sends a field not listed here, that is a bug. See PRIVACY.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["observation", "installId"],
+  "properties": {
+    "installId": {
+      "type": "string",
+      "description": "SHA-256 hex of a random UUID generated at install. Rate limiting only. Regenerated on reinstall.",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["productKey", "productKeyType", "price", "currency", "url", "observedAt", "source", "extractor"],
+      "properties": {
+        "productKey": { "type": "string", "description": "GTIN, SKU, MPN or canonical URL." },
+        "productKeyType": { "enum": ["gtin", "sku", "mpn", "url"] },
+        "name": { "type": "string", "description": "Product name as shown on the page." },
+        "price": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "country": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "Destination country shown by the page. Never derived from the user." },
+        "url": { "type": "string", "format": "uri", "description": "Canonical page URL. Query string and fragment removed before sending." },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "source": { "enum": ["jsonld", "dom"] },
+        "extractor": { "type": "string" },
+        "variantCount": { "type": "integer", "minimum": 2 },
+        "priceRange": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": { "min": { "type": "number" }, "max": { "type": "number" } }
+        }
+      }
+    }
+  }
+}

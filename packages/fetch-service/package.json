@@ -1,0 +1,14 @@
+{
+  "name": "@natural-price/fetch-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@natural-price/extension": "*",
+    "jsdom": "^25.0.1",
+    "playwright": "^1.63.0"
+  }
+}

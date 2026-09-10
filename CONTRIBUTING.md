@@ -40,13 +40,25 @@ before you start.
 
 ```bash
 npm install
+npx playwright install chromium     # for the end-to-end tests and the service
 npm run typecheck
-npm test
+npm run test:unit                   # fast, no browser
+npm test                            # includes end-to-end with headless Chromium
 npm run demo -- <url-or-fixture.html>
+npm run service                     # fetch service on :8787
+npm run build:extension             # packages/extension/dist, load unpacked
+npm run live-check -- 3             # real sites, before a release
 ```
 
-TypeScript, Vitest, jsdom. Node 20 or newer. Open an issue before starting
-anything bigger than an extractor so nobody duplicates work.
+TypeScript, Vitest, jsdom, Playwright, esbuild. Node 20 or newer. Open an
+issue before starting anything bigger than an extractor so nobody duplicates
+work.
+
+The comparison rules live in `docs/comparison-rules.md` and
+`packages/fetch-service/src/compare.ts`. Change both in the same pull
+request. The outbound payload is defined in `docs/payload-schema.json`; if
+you add a field to what the extension sends, add it there and to
+PRIVACY.md first.
 
 ## Licence
 
