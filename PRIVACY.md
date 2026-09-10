@@ -21,11 +21,22 @@ Anything not in that schema is rejected by the service.
 | `variantCount`, `priceRange` | `29`, `{min, max}` | Only on pages listing several variants. Read from the page. |
 | `installId` | SHA-256 of a random UUID | Rate limiting only. Not linked to any account. Regenerated if you reinstall. |
 
-## What the extension will send to the crowd API (phase 4)
+## What the fetch service forwards to the crowd API
 
-The same fields, plus a `product_key` (canonical URL or GTIN), with
-`observed_at` rounded to the hour and `install_id` hashed again with a daily
-salt so observations from the same install cannot be joined across days.
+The extension makes one network call, to the fetch service. When a crowd
+API is configured, the fetch service forwards the same validated body
+there, server to server. The crowd API stores:
+
+| Stored | From | Not stored |
+|---|---|---|
+| `product_key`, `key_type`, `currency`, `country`, `price` | the observation | the page URL and path (only the hostname is kept) |
+| `hour` | `observedAt` rounded down to the UTC hour | the minute or second |
+| `install_hash` | the already-hashed install id, hashed again with a salt that changes every UTC day | anything that links two days of the same install |
+
+One row per install per product per hour: a repeat replaces the earlier
+row. Aggregates (count, distinct installs, minimum, maximum, median) are
+computed with the SQL in [docs/crowd-aggregation.sql](docs/crowd-aggregation.sql)
+and published as an open dataset; see [docs/open-data.md](docs/open-data.md).
 
 ## What is never sent
 
@@ -40,8 +51,8 @@ salt so observations from the same install cannot be joined across days.
 - Fetch service: a rate-limit counter per hashed install id, expiring after
   24 hours, and one log line per check with time, hostname, duration, fetch
   statuses and verdict. No IP, no install id, no path, no query.
-- Crowd API: the anonymised observations above, kept indefinitely, published
-  in aggregate.
+- Crowd API: the rows described above, kept indefinitely, published only in
+  aggregate.
 
 ## Legal basis
 

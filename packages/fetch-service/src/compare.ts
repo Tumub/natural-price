@@ -1,4 +1,5 @@
 import type { Observation } from '@natural-price/extension';
+import type { Aggregate, CrowdAnswer } from './crowd';
 
 /**
  * Comparison rules. The written version is docs/comparison-rules.md; keep
@@ -11,6 +12,8 @@ export const WINDOW_MS = 15 * 60 * 1000;
 export const SAME_THRESHOLD = 0.005;
 /** Two clean fetches "agree" when they are within this of each other. */
 export const AGREE_THRESHOLD = 0.005;
+/** The crowd counts only when at least this many other installs saw the product. */
+export const CROWD_MIN_OTHERS = 5;
 
 export type Confidence = 'low' | 'medium' | 'high';
 
@@ -21,8 +24,20 @@ export interface CleanResult {
   reason?: string;
 }
 
+export interface CrowdSummary {
+  window: 'hour' | 'day';
+  /** Installs other than the one asking. */
+  others: number;
+  median: number;
+  min: number;
+  max: number;
+}
+
 export interface Comparison {
   comparable: boolean;
+  /** What the difference is measured against. */
+  basis: 'clean' | 'crowd' | 'none';
+  crowd?: CrowdSummary;
   /** Why not comparable, or notes when it is. */
   reasons: string[];
   yours: { price: number; currency: string };
@@ -40,10 +55,24 @@ function sameKey(a: Observation, b: Observation): boolean {
   return a.url === b.url;
 }
 
-export function compare(yours: Observation, cleans: CleanResult[], now = new Date()): Comparison {
+/** The crowd window to use: this hour if enough others saw it, else today, else nothing. */
+export function pickCrowd(answer: CrowdAnswer | null | undefined): CrowdSummary | undefined {
+  const use = (a: Aggregate | null): CrowdSummary | undefined => {
+    if (!a) return undefined;
+    const others = a.installs - 1;
+    if (others < CROWD_MIN_OTHERS) return undefined;
+    return { window: a.window, others, median: a.median, min: a.min, max: a.max };
+  };
+  return use(answer?.hour ?? null) ?? use(answer?.day ?? null);
+}
+
+export function compare(yours: Observation, cleans: CleanResult[], crowdAnswer: CrowdAnswer | null = null, now = new Date()): Comparison {
   const reasons: string[] = [];
+  const crowd = pickCrowd(crowdAnswer);
   const base: Comparison = {
     comparable: false,
+    basis: 'none',
+    ...(crowd ? { crowd } : {}),
     reasons,
     yours: { price: yours.price, currency: yours.currency },
     verdict: 'unknown',
@@ -65,7 +94,7 @@ export function compare(yours: Observation, cleans: CleanResult[], now = new Dat
   if (usable.length === 0) {
     const blocked = cleans.filter((c) => c.status === 'blocked').length;
     reasons.push(blocked ? 'the site refused the clean fetch' : 'no clean price could be read');
-    return base;
+    return crowdOnly(base, yours, crowd, reasons);
   }
 
   const valid: { c: CleanResult; o: Observation }[] = [];
@@ -89,7 +118,7 @@ export function compare(yours: Observation, cleans: CleanResult[], now = new Dat
     }
     valid.push({ c, o });
   }
-  if (valid.length === 0) return base;
+  if (valid.length === 0) return crowdOnly(base, yours, crowd, reasons);
 
   // Confidence: one fetch is low. Two fetches from different exits that agree is medium.
   const exits = new Set(valid.map((v) => v.c.exitLocation));
@@ -107,12 +136,39 @@ export function compare(yours: Observation, cleans: CleanResult[], now = new Dat
   if (!yours.country || !ref.o.country) reasons.push('destination country not shown by the page; assumed the same');
   reasons.push('tax treatment assumed identical: both prices come from the same page template');
 
+  // The crowd can raise confidence to high when it agrees with the clean fetch, and only then.
+  if (crowd) {
+    const gap = Math.abs(ref.o.price - crowd.median) / crowd.median;
+    if (gap <= AGREE_THRESHOLD) {
+      confidence = 'high';
+      reasons.push(`${crowd.others} other people saw the same price ${crowd.window === 'hour' ? 'this hour' : 'today'}`);
+    } else {
+      reasons.push(`the clean fetch and the crowd median differ by ${(gap * 100).toFixed(1)}%; the site may price by session or time`);
+    }
+  }
+
   return {
     ...base,
     comparable: true,
+    basis: 'clean',
     clean: { price: ref.o.price, currency: ref.o.currency, exitLocation: ref.c.exitLocation },
     difference,
     verdict,
     confidence,
+  };
+}
+
+/** No usable clean fetch: fall back to the crowd median alone, at medium confidence. */
+function crowdOnly(base: Comparison, yours: Observation, crowd: CrowdSummary | undefined, reasons: string[]): Comparison {
+  if (!crowd) return base;
+  const difference = (yours.price - crowd.median) / crowd.median;
+  reasons.push(`compared with what ${crowd.others} other people saw ${crowd.window === 'hour' ? 'this hour' : 'today'}`);
+  return {
+    ...base,
+    comparable: true,
+    basis: 'crowd',
+    difference,
+    verdict: Math.abs(difference) < SAME_THRESHOLD ? 'same' : difference > 0 ? 'higher' : 'lower',
+    confidence: 'medium',
   };
 }

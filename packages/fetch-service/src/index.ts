@@ -1,6 +1,7 @@
+import { RateLimiter } from '@natural-price/shared';
 import { CleanFetcher, exitsFromEnv } from './browser';
 import { Breaker } from './breaker';
-import { RateLimiter } from './ratelimit';
+import { CrowdClient } from './crowd';
 import { createApp } from './server';
 import { Stats } from './stats';
 
@@ -15,8 +16,9 @@ if (statsFile) stats.load(statsFile);
 const breaker = new Breaker(Number(process.env.NP_BREAK_AFTER ?? 3), 10 * 60_000, Number(process.env.NP_BREAK_MINUTES ?? 15) * 60_000);
 
 await fetcher.start();
-const app = createApp({ fetcher, limiter, allowedHosts, fetchesPerCheck: Number(process.env.NP_FETCHES_PER_CHECK ?? 2), breaker, stats });
-app.listen(port, () => console.log(`natural-price fetch-service on :${port}, exits: ${fetcher.exitLabels.join(', ')}, hosts: ${allowedHosts.join(', ') || 'any'}`));
+const crowd = process.env.NP_CROWD_URL ? new CrowdClient(process.env.NP_CROWD_URL) : undefined;
+const app = createApp({ fetcher, limiter, allowedHosts, fetchesPerCheck: Number(process.env.NP_FETCHES_PER_CHECK ?? 2), breaker, stats, crowd });
+app.listen(port, () => console.log(`natural-price fetch-service on :${port}, exits: ${fetcher.exitLabels.join(', ')}, hosts: ${allowedHosts.join(', ') || 'any'}, crowd: ${process.env.NP_CROWD_URL ?? 'off'}`));
 setInterval(() => limiter.sweep(), 60 * 60 * 1000).unref();
 if (statsFile) setInterval(() => stats.save(statsFile), 60 * 1000).unref();
 
