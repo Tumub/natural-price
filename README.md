@@ -34,7 +34,7 @@ sees. On 2026-09-10 it printed:
   "price": 59.95,
   "currency": "CHF",
   "url": "https://www.ikea.com/ch/en/p/billy-bookcase-white-00263850/",
-  "observedAt": "2026-09-10T09:40:12.000Z",
+  "observedAt": "2026-09-10T07:35:53.174Z",
   "source": "jsonld",
   "extractor": "jsonld",
   "name": "BILLY Bookcase - white 80x28x202 cm",
