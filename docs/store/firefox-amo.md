@@ -30,9 +30,10 @@ the notes.
 
 Privacy policy: paste PRIVACY.md.
 
-Data collection disclosure: "Collects website content (prices and product
-identifiers on pages you view) and sends it to the configured server. Does
-not collect personal data."
+Data collection disclosure: "By default collects nothing: prices are read
+and compared on the user's own device. If the user switches on the
+optional server setting, sends prices and product identifiers for four
+named shops to the configured server. Does not collect personal data."
 
 ## Before submitting
 

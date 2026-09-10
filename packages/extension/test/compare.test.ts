@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Observation } from '@natural-price/extension';
-import { compare, pickCrowd, type CleanResult } from '../src/compare';
-import type { CrowdAnswer } from '../src/crowd';
+import type { Observation } from '../src/types';
+import { compare, pickCrowd, type CleanResult, type CrowdAnswer } from '../src/compare';
 
 const now = new Date('2026-09-10T10:00:00Z');
 const obs = (over: Partial<Observation> = {}): Observation => ({

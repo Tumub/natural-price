@@ -1,26 +1,47 @@
+import { compare, type CleanResult } from './compare';
 import { getInstallId } from './install-id';
 import type { CheckRequest, CheckResponse, OpenPrivateRequest, OpenPrivateResponse } from './messages';
 import { isProbeTab, probe, resolveProbe } from './probe';
-import { getSettings } from './settings';
+import { getSettings, serverAllowed } from './settings';
 
 /**
- * The only network call the extension makes: POST the observation to the
- * fetch service. Runs here rather than in the content script so the page's
- * own CSP and cookies play no part. Depending on the setting, a clean
- * session on this device runs first and travels with the request.
+ * Answers the content script's check.
+ *
+ * In the default mode nothing leaves the browser: the page is opened once
+ * more in a private tab on this device, read, and the two prices compared
+ * here with the same rules the server uses. There is no network call and no
+ * server involved, on any website.
+ *
+ * The server is contacted only when the user has switched it on and only
+ * for the companies in SERVER_SITES. Everything else falls back to the
+ * device comparison.
  */
 async function check(req: CheckRequest): Promise<CheckResponse> {
   const settings = await getSettings();
+  const notes: string[] = [];
+  const useServer = settings.cleanMode !== 'local' && serverAllowed(req.observation.url);
+  if (settings.cleanMode !== 'local' && !useServer) {
+    notes.push('this site is not one the server is allowed to contact, so the comparison stayed on your device');
+  }
+
+  // The private tab runs for every mode except server-only.
+  let client: CleanResult[] = [];
+  if (settings.cleanMode !== 'server' || !useServer) {
+    const p = await probe(req.observation.url);
+    if (p.observation) client = [{ observation: p.observation, status: 'ok', exitLocation: 'private-tab' }];
+    else notes.push(`private tab: ${p.reason ?? 'no price read'}`);
+  }
+
+  if (!useServer) {
+    const r = compare(req.observation, client);
+    r.reasons = [...notes, 'compared on your device; nothing was sent to any server', ...r.reasons];
+    return r;
+  }
+
   const installId = await getInstallId();
   const body: Record<string, unknown> = { observation: req.observation, installId };
-  const notes: string[] = [];
-
-  if (settings.cleanMode !== 'server') {
-    const p = await probe(req.observation.url);
-    if (p.observation) body.clientClean = p.observation;
-    else notes.push(`private tab: ${p.reason ?? 'no price read'}`);
-    if (settings.cleanMode === 'private') body.skipServer = true;
-  }
+  if (client[0]?.observation) body.clientClean = client[0].observation;
+  if (settings.cleanMode === 'both' && client.length === 0) notes.push('the server answered alone');
 
   const res = await fetch(new URL('/check', settings.serviceUrl).toString(), {
     method: 'POST',

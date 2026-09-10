@@ -14,6 +14,7 @@ contributors. Slip is expected; scope is fixed per phase, dates are not.
 | Sterile browsing shield | Out of scope | Manifest V3 allows only static header rules and forbids touching referer. Not buildable in Chrome. |
 | Price extraction | schema.org JSON-LD `Offer` first, per-site DOM fallback | Covers most large retailers with one generic extractor. |
 | Clean session on the device (added 2026-09-10) | Optional private tab on the user's machine, alongside or instead of the server | First production day showed MediaMarkt blocking the datacenter address. A private tab uses the user's own address, costs nothing, and covers the commonest case, logged in versus not. The server stays for location and device effects. |
+| Device-first by default (added 2026-09-10) | The private tab and a local comparison are the default; the server is opt-in and limited in code to four named companies; the reader runs on all websites | Owner decision. It makes the privacy notice short and true, removes most of GDPR from most of the product, avoids datacenter blocking, and keeps the server small. The cost is a broader install permission and a harder store review, answered by the fact that all-sites access is for reading and the default sends nothing. |
 
 ## Phase 1: Foundation (2026-09-10 to 2026-09-30)
 

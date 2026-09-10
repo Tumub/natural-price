@@ -5,7 +5,7 @@ import { normalizeUrl } from '@natural-price/extension';
 import { RateLimiter, json, pathOf, readJson, validateCheckBody } from '@natural-price/shared';
 import { CleanFetcher } from './browser';
 import { Breaker } from './breaker';
-import { compare, type CleanResult, type Comparison } from './compare';
+import { compare, type CleanResult, type Comparison } from '@natural-price/extension';
 import { CrowdClient } from './crowd';
 import { Stats } from './stats';
 

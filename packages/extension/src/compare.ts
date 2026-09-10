@@ -1,8 +1,24 @@
-import type { Observation } from '@natural-price/extension';
-import type { Aggregate, CrowdAnswer } from './crowd';
+import type { Observation } from './types';
+
+/** What the crowd API reports for a product, currency and destination. */
+export interface Aggregate {
+  window: 'hour' | 'day';
+  bucket: string;
+  n: number;
+  installs: number;
+  median: number;
+  min: number;
+  max: number;
+}
+export interface CrowdAnswer {
+  hour: Aggregate | null;
+  day: Aggregate | null;
+}
 
 /**
- * Comparison rules. The written version is docs/comparison-rules.md; keep
+ * Comparison rules. Run in the browser when the clean session is a private
+ * tab on the device, and on the server when it fetches. One implementation,
+ * so both give the same answer. The written version is docs/comparison-rules.md; keep
  * the two in step. Everything here is deliberately conservative: when in
  * doubt, say "not comparable" rather than invent a difference.
  */

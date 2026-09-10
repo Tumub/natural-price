@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import type { CleanResult } from './compare';
+import type { CleanResult } from '@natural-price/extension';
 
 /**
  * Aggregate counters per host per UTC day. This is how the beta measures

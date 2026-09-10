@@ -1,7 +1,7 @@
 import { chromium, type Browser } from 'playwright';
 import { extract, type Observation } from '@natural-price/extension';
 import { parseHtml } from '@natural-price/extension/src/dom';
-import type { CleanResult } from './compare';
+import type { CleanResult } from '@natural-price/extension';
 
 /**
  * Clean-room fetch. One fresh browser context per request: no cookies, no
