@@ -26,6 +26,8 @@ set -euo pipefail
 NP_PROJECT=${NP_PROJECT:-natural-price}
 NP_ENVIRONMENT=${NP_ENVIRONMENT:-production}
 NP_REPO=${NP_REPO:-https://github.com/Tumub/natural-price}
+# Coolify stores public GitHub repositories as owner/repo and prefixes the host itself.
+NP_REPO_SHORT=${NP_REPO#https://github.com/}; NP_REPO_SHORT=${NP_REPO_SHORT%.git}
 NP_BRANCH=${NP_BRANCH:-main}
 NP_ALLOWED_HOSTS=${NP_ALLOWED_HOSTS:-ikea.com,mediamarkt.ch,nike.com}
 NP_EXITS=${NP_EXITS:-direct}
@@ -84,7 +86,7 @@ ensure_app() { # name dockerfile_location port domain internal_name memory
   local uuid; uuid=$(find_app "$name")
   local body; body=$(jq -nc \
     --arg project "$project_uuid" --arg server "$server_uuid" --arg envn "$NP_ENVIRONMENT" --arg envu "$env_uuid" \
-    --arg repo "$NP_REPO" --arg branch "$NP_BRANCH" --arg name "$name" --arg df "$dockerfile" --arg port "$port" \
+    --arg repo "$NP_REPO_SHORT" --arg branch "$NP_BRANCH" --arg name "$name" --arg df "$dockerfile" --arg port "$port" \
     --arg domain "$domain" --arg internal "$internal" --arg memory "$memory" '
     {project_uuid:$project, server_uuid:$server, environment_name:$envn, environment_uuid:$envu,
      git_repository:$repo, git_branch:$branch, build_pack:"dockerfile", dockerfile_location:$df, base_directory:"/",
@@ -122,7 +124,8 @@ set_envs() { # uuid KEY=VALUE...
     local k=${kv%%=*} v=${kv#*=}
     local old; old=$(echo "$existing" | jq -r --arg k "$k" '.[] | select(.key==$k) | .uuid')
     local body; body=$(jq -nc --arg k "$k" --arg v "$v" '{key:$k, value:$v, is_preview:false, is_literal:true}')
-    if [ -n "$old" ]; then api PATCH "/applications/$uuid/envs" "$(echo "$body" | jq -c --arg u "$old" '. + {uuid:$u}')" >/dev/null
+    # Update is by key on this Coolify version; the uuid field is rejected.
+    if [ -n "$old" ]; then api PATCH "/applications/$uuid/envs" "$body" >/dev/null
     else api POST "/applications/$uuid/envs" "$body" >/dev/null; fi
   done
 }
@@ -130,8 +133,8 @@ set_envs() { # uuid KEY=VALUE...
 ensure_volume() { # uuid name mount
   local uuid=$1 name=$2 mount=$3
   # Response shape differs between Coolify versions (flat list or nested); look for any object with this mount path.
-  local have; have=$(api GET "/applications/$uuid/storages" | jq -r --arg m "$mount" '[.. | objects | select(.mount_path? == $m)] | first | .uuid // "found"')
-  if [ -z "$have" ]; then
+  local have; have=$(api GET "/applications/$uuid/storages" | jq -r --arg m "$mount" '[.. | objects | select(.mount_path? == $m)] | length')
+  if [ "$have" = 0 ]; then
     api POST "/applications/$uuid/storages" "$(jq -nc --arg n "$name" --arg m "$mount" '{type:"persistent", name:$n, mount_path:$m}')" >/dev/null
     echo "  volume $name -> $mount"
   fi

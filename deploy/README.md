@@ -72,8 +72,11 @@ with `/`; project descriptions may not contain a colon; the fields
 `custom_internal_name`, `is_consistent_container_name_enabled` and
 `docker_images_to_keep` are rejected at creation and applied as a
 best-effort update; the storages listing is `{persistent_storages,
-file_storages}`. When the internal name is refused, the fetch service
-addresses the crowd API by its application UUID on Coolify's network.
+file_storages}`; env vars are updated by key, not uuid; the repository
+must be given as `owner/repo`, a full URL gets the host prepended twice on
+update. Health checks run curl inside the container, so every image ships
+curl. When the internal name is refused, the fetch service addresses the
+crowd API by its network alias.
 
 ## Elsewhere
 
